@@ -1,0 +1,75 @@
+*.sw*
+*.git_ignore_me
+*.git_ignore_me.*
+.fuse_hidden*
+
+# Next thing is needed for Helm+Projectile/Ag to ignore SWIG-generated code.
+# It's already .gitignored somehow, but without this entry Projectile does not
+# realise :(
+ssipp_wrap.cc
+ssipp.py
+
+## From https://raw.github.com/github/gitignore/master/C++.gitignore
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Callgrind
+callgrind.out*
+
+# Dependency files
+*.d
+
+## My additions
+parser.cc
+parser.h
+lexer.cc
+eval_planner
+planner
+solver
+solver_ssp
+solver_cssp
+main
+heur_eval
+
+*.lp
+*.ilp
+gurobi.log
+
+.ycm_extra_conf.pyc
+.ycm_extra_conf.py
+
+# editor cruft
+.#*
+tags
+cscope.files
+
+# for swig
+*.pyc
+__pycache__
+swig/python
+
+# for setup.py
+*.egg-info
+*.egg
+/dist
+/build
+/.eggs
