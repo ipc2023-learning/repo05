@@ -14,7 +14,6 @@ import sys
 from time import time
 from pathlib import Path
 import shutil
-
 import ray
 
 THIS_DIR = path.dirname(path.abspath(__file__))

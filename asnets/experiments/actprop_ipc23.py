@@ -53,7 +53,7 @@ NUM_LAYERS = 2
 HIDDEN_SIZE = 16  # EXPERIMENTAL
 # include skip connections
 SKIP = True
-USE_LMCUT_FEATURES = TRUE
+USE_LMCUT_FEATURES = True
 
 # train + eval settings
 # For Joerg:
