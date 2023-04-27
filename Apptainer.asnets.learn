@@ -1,0 +1,80 @@
+# Stage 1: Compile the planner
+Bootstrap: docker
+From: ubuntu:22.04
+Stage: build 
+
+%files
+    .
+
+%post
+
+    apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        python3 python3-numpy python3-dev python3-pip python3-wheel python3-venv flex \
+        bison build-essential autoconf libtool libboost-all-dev cmake \
+        libhdf5-dev g++ make
+
+
+    alias python=python3
+    pip3 install --upgrade pip
+    pip3 install wheel cython numpy pkgconfig werkzeug
+
+    # Install Fast Downward
+    cd downward && ./build.py && cd ..
+
+    # Install ssipp
+    cd asnets/ssipp && python3 build.py solver_ssp && cd ../..
+
+    # Install MDPSIM
+    pip3 install -e mdpsim
+
+    # Install PDDL parser
+    cd pddl-parser && python3 setup.py install && cd ..
+
+    pip3 install -e asnets
+
+    # Install PySAT
+    pip3 install python-sat[pblib,aiger]
+    
+
+# Stage 2: Run the planner
+Bootstrap: docker
+From: ubuntu:22.04
+Stage: run
+
+%files from build
+    .
+
+%post 
+     ## Remove unnecessary files to keep the image small.
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+    
+%runscript
+    #! /bin/bash
+    set -euo pipefail
+    
+    DOMAIN_KNOWLEDGE_FILE="$1"
+    DOMAIN_FILE="$2"
+    PARAMS="$3"
+    shift 3  # Forget first two arguments.
+    PROBLEM_FILES=("$@")  # All remaining arguments are problem files.
+
+    asnets/run_learn "$PARAMS" "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "${PROBLEM_FILES[@]}"
+
+    
+%labels
+Name        asnets 2023
+Description Action Schema Networks implemented in Tensorflow 2.X
+Authors     Mingyu Hao, Ryan Wang, Sam Toyer, Felipe Trevizan, Sylvie Thiébaux, Lexing Xie
+License     GPL 3
+Tracks      single-core
+SupportsDerivedPredicates                       no
+SupportsUniversallyQuantifiedPreconditions      no
+SupportsExistentiallyQuantifiedPreconditions    no
+SupportsUniversallyQuantifiedEffects            no
+SupportsNegativePreconditions                   no
+SupportsEqualityPreconditions                   no
+SupportsInequalityPreconditions                 no
+SupportsConditionalEffects                      no
+SupportsImplyPreconditions                      no
