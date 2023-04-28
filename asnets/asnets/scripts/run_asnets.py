@@ -408,7 +408,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--limit-train-obs-size',
-    default=700,
+    default=99999,
     help="limit the problem size. If it is too big, skip the problem."
 )
 parser.add_argument(

@@ -331,7 +331,7 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(filename='learn.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(filename='learn.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
     logging.info('logbook started')
 
     # 1. load config
