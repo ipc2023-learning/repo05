@@ -168,7 +168,7 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
         return final_checkpoint_path
 
 
-def build_arch_flags(arch_mod, is_train):
+def build_arch_flags(arch_mod, rollout, teacher_heuristic, is_train):
     """Build flags which control model arch and training strategy."""
     flags = []
     assert arch_mod.SUPERVISED, "only supervised training supported atm"
@@ -201,7 +201,7 @@ def build_arch_flags(arch_mod, is_train):
     flags.extend([
         '--num-layers', str(arch_mod.NUM_LAYERS),
         '--hidden-size', str(arch_mod.HIDDEN_SIZE),
-        '--target-rollouts-per-epoch', str(arch_mod.TARGET_ROLLOUTS_PER_EPOCH),
+        '--target-rollouts-per-epoch', str(int(rollout)),
         '--l2-reg', l2_reg,
         '--l1-reg', l1_reg,
         '-R', str(arch_mod.EVAL_ROUNDS),
@@ -214,7 +214,7 @@ def build_arch_flags(arch_mod, is_train):
         '--ssipp-teacher-heur', arch_mod.SSIPP_TEACHER_HEURISTIC,
         '--opt-batch-per-epoch', str(arch_mod.OPT_BATCH_PER_EPOCH),
         '--teacher-planner', arch_mod.TEACHER_PLANNER,
-        '--fd-teacher-heuristic', arch_mod.FD_TEACHER_HEURISTIC,
+        '--fd-teacher-heuristic', teacher_heuristic,
         '--sup-objective', arch_mod.TRAINING_STRATEGY,
         '--max-opt-epochs', str(arch_mod.MAX_OPT_EPOCHS),
         '--limit-train-obs-size', str(arch_mod.LIMIT_TRAIN_OBS_SIZE)
@@ -387,11 +387,12 @@ def main_inner(*,
         '-e', prefix_dir,
     ]  # yapf: disable
     trained_problems = [problems.pop(0)]
+    unsolved_problems = []
     final_checkpoint = None
     while problems:
         train_flags = []
         train_flags.extend(train_flags_base)
-        train_flags.extend(build_arch_flags(arch_mod, is_train=True))
+        train_flags.extend(build_arch_flags(arch_mod, rollout=arch_mod.TARGET_ROLLOUTS_PER_EPOCH, teacher_heuristic=arch_mod.FD_TEACHER_HEURISTIC, is_train=True))
         train_flags.extend(['--dK', domain_knowledge_name])
         if os.path.exists(domain_knowledge_name):
             train_flags.extend(['--resume-from', domain_knowledge_name])
@@ -420,7 +421,45 @@ def main_inner(*,
             # point collate_results at
         except ray.exceptions.OutOfMemoryError as e:
             print("out of memory!")
-            train_flags.pop()
+            unsolved_problems.append(train_flags.pop())
+            continue
+    
+    # try to solve unsolved cases again with much more aggresive parameters
+    still_not_ok = True
+    rollout = arch_mod.TARGET_ROLLOUTS_PER_EPOCH
+    heus = 'gbf-hadd'
+    while still_not_ok:
+        train_flags = []
+        train_flags.extend(train_flags_base)
+        rollout = round(rollout * 0.9)
+        train_flags.extend(build_arch_flags(arch_mod, rollout=rollout, teacher_heuristic=heus, is_train=True))
+        train_flags.extend(['--dK', domain_knowledge_name])
+        if os.path.exists(domain_knowledge_name):
+            train_flags.extend(['--resume-from', domain_knowledge_name])
+        train_flags.append(domain)
+        train_flags.extend(trained_problems)
+        train_flags.extend(unsolved_problems)
+        print(train_flags)
+        try:
+            final_checkpoint = ray.get(
+                run_asnets_ray.remote(
+                    flags=train_flags,
+                    # we make sure it runs cmd in same dir as us,
+                    # because otherwise Ray subprocs freak out
+                    cwd=root_cwd,
+                    root_dir=prefix_dir,
+                    need_snapshot=True,
+                    is_train=True,
+                    enforce_ncpus=enforce_job_ncpus,
+                    timeout=arch_mod.TIME_LIMIT_SECONDS))
+            logging.info('Last valid checkpoint is %s' % final_checkpoint)
+
+            shutil.copy(final_checkpoint, domain_knowledge_name)
+            # return the prefix_dir because hype.py needs that to figure out where to
+            # point collate_results at
+            still_not_ok = False
+        except ray.exceptions.OutOfMemoryError as e:
+            print("out of memory!")
             continue
 
 

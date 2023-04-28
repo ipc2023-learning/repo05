@@ -3,7 +3,7 @@
  * Tokenizer.
  *
  * Copyright 2003-2005 Carnegie Mellon University and Rutgers University
- * Copyright 2007 HÃ¥kan Younes
+ * Copyright 2007 Håkan Younes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ problem                         return make_string(yytext, PROBLEM);
 :continuous-effects             return CONTINUOUS_EFFECTS;
 :probabilistic-effects          return PROBABILISTIC_EFFECTS;
 :rewards                        return REWARDS;
+:action-costs                   return REWARDS;
 :mdp                            return MDP;
 :action                         return ACTION;
 :parameters                     return PARAMETERS;

@@ -411,7 +411,7 @@ class FDQValueCache(object):
                  planner_exts: 'PlannerExtensions',
                  *,
                  planner: str='astar-hadd',
-                 timeout_s: float=1800):
+                 timeout_s: float=3600):
         """Construct a new FDQValueCache.
 
         Args:
