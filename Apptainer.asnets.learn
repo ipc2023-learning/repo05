@@ -57,11 +57,10 @@ Stage: run
     set -euo pipefail
     DOMAIN_KNOWLEDGE_FILE="$1"
     DOMAIN_FILE="$2"
-    PARAMS="$3"
-    shift 3  # Forget first two arguments.
+    shift 2  # Forget first two arguments.
     PROBLEM_FILES=("$@")  # All remaining arguments are problem files.
 
-    asnets/run_learn "$PARAMS" "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "${PROBLEM_FILES[@]}"
+    asnets/run_learn experiments.actprop_ipc23 "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "${PROBLEM_FILES[@]}"
 
     
 %labels
