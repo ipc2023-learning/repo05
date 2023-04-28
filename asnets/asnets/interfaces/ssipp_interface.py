@@ -8,7 +8,7 @@ from types import ModuleType
 from typing import Any, List, Tuple
 
 ABOVE_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..'))
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../..'))
 SSIPP_MANUAL_DIR = os.path.join(ABOVE_DIR, 'ssipp-solver')
 
 
