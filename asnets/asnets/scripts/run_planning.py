@@ -368,7 +368,7 @@ def main_inner(*,
                plan,
                job_ncpus,
                enforce_job_ncpus,
-               domain_knowledge_name="DK"):
+               domain_knowledge_name="dk"):
     run_asnets_ray = ray.remote(num_cpus=job_ncpus)(run_asnets_local)
     root_cwd = getcwd()
 

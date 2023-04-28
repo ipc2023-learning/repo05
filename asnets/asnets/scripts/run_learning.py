@@ -8,12 +8,14 @@ from hashlib import md5
 from importlib import import_module
 import logging
 from os import path, makedirs, listdir, getcwd
+import os
 from shutil import copytree
 from subprocess import Popen, PIPE, TimeoutExpired
 import sys
 from time import time
 from pathlib import Path
 import shutil
+
 import ray
 
 THIS_DIR = path.dirname(path.abspath(__file__))
@@ -71,6 +73,7 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
     dfpg_proc = tee_out_proc = tee_err_proc = None
     start_time = time()
     try:
+        print(cmdline)
         # print to stdout/stderr *and* save as well
         dfpg_proc = Popen(cmdline, stdout=PIPE, stderr=PIPE, cwd=cwd)
         # first tee for stdout
@@ -379,30 +382,48 @@ def main_inner(*,
 
     # 3. train network
     logging.info('\n\n\n\n\n\nTraining network')
-    train_flags = [
+    train_flags_base = [
         # log and snapshot dirs
         '-e', prefix_dir,
     ]  # yapf: disable
-    train_flags.extend(build_arch_flags(arch_mod, is_train=True))
-    train_flags.extend(['--DK', domain_knowledge_name])
-    train_flags.append(domain)
-    train_flags.extend(problems)
-    final_checkpoint = ray.get(
-        run_asnets_ray.remote(
-            flags=train_flags,
-            # we make sure it runs cmd in same dir as us,
-            # because otherwise Ray subprocs freak out
-            cwd=root_cwd,
-            root_dir=prefix_dir,
-            need_snapshot=True,
-            is_train=True,
-            enforce_ncpus=enforce_job_ncpus,
-            timeout=arch_mod.TIME_LIMIT_SECONDS))
-    logging.info('Last valid checkpoint is %s' % final_checkpoint)
+    trained_problems = [problems.pop(0)]
+    final_checkpoint = None
+    while problems:
+        train_flags = []
+        train_flags.extend(train_flags_base)
+        train_flags.extend(build_arch_flags(arch_mod, is_train=True))
+        train_flags.extend(['--dK', domain_knowledge_name])
+        if os.path.exists(domain_knowledge_name):
+            train_flags.extend(['--resume-from', domain_knowledge_name])
+        train_flags.append(domain)
+        train_flags.extend(trained_problems)
+        new_problem = problems.pop(0)
+        train_flags.append(new_problem)
+        trained_problems.append(new_problem)
+        print(train_flags)
+        try:
+            final_checkpoint = ray.get(
+                run_asnets_ray.remote(
+                    flags=train_flags,
+                    # we make sure it runs cmd in same dir as us,
+                    # because otherwise Ray subprocs freak out
+                    cwd=root_cwd,
+                    root_dir=prefix_dir,
+                    need_snapshot=True,
+                    is_train=True,
+                    enforce_ncpus=enforce_job_ncpus,
+                    timeout=arch_mod.TIME_LIMIT_SECONDS))
+            logging.info('Last valid checkpoint is %s' % final_checkpoint)
 
-    shutil.copy(final_checkpoint, domain_knowledge_name)
-    # return the prefix_dir because hype.py needs that to figure out where to
-    # point collate_results at
+            shutil.copy(final_checkpoint, domain_knowledge_name)
+            # return the prefix_dir because hype.py needs that to figure out where to
+            # point collate_results at
+        except ray.exceptions.OutOfMemoryError as e:
+            print("out of memory!")
+            train_flags.pop()
+            continue
+
+
     return prefix_dir
 
 

@@ -43,6 +43,7 @@ def try_install_ssipp_solver():
         subprocess.run(["python3", "build.py", "solver_ssp"],
                        check=True,
                        cwd=SSIPP_MANUAL_DIR)
+    ssipp_binary_path = os.path.join(SSIPP_MANUAL_DIR, "solver_ssp")
     assert os.path.exists(ssipp_binary_path), \
         "install failed; nothing found at '%s'" % (ssipp_binary_path, )
 

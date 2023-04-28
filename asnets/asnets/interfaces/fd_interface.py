@@ -42,7 +42,7 @@ def try_install_fd():
     # processes at once.
     if not has_fd():
         print("Installing FD")
-        if not osp.exists(FD_PATH):
+        if not osp.exists(FD_DIR):
             # these commands check out a specific revision of fd, per
             # # https://stackoverflow.com/a/3489576
             # subprocess.run(["git", "init", "fd"], check=True, cwd=ABOVE_DIR)

@@ -23,7 +23,7 @@ class BuildExt(build_ext):
         # https://github.com/frida/frida-python/blob/6084f2fef4ac9a28b89c0775b4de2f326630fb21/src/setup.py
         # TODO: try supporting build_ext.* flags (e.g. debug, parallel,
         # whatever)
-        rv = run(['python', 'build.py', 'pybind'],
+        rv = run(['python3', 'build.py', 'pybind'],
                  stdout=PIPE,
                  stderr=PIPE,
                  universal_newlines=True,

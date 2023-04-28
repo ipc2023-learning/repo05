@@ -346,7 +346,7 @@ parser.add_argument(
 parser.add_argument(
     '-e', '--expt-dir', default=None, help='path to store experiments in')
 parser.add_argument(
-    '--DK', default='DK', help='prefix of the domain knowledge file'
+    '--dK', default='dk', help='prefix of the domain knowledge file'
 )
 parser.add_argument(
     '--debug',
@@ -656,7 +656,8 @@ def main_supervised(args, unique_prefix, snapshot_dir, scratch_dir):
             early_stop=args.supervised_early_stop,
             save_every=args.save_every,
             scratch_dir=scratch_dir,
-            snapshot_dir=snapshot_dir
+            snapshot_dir=snapshot_dir,
+            dk = args.dK,
         )
         best_rate, elapsed_time, iter_num = sup_trainer.train(
             max_epochs=args.max_opt_epochs)

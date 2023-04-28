@@ -8,14 +8,13 @@ Downward (FD) teacher."""
 SUPERVISED = True
 
 # learning rate
-SUPERVISED_LEARNING_RATE = 1e-3  # EXPERIMENTAL
+SUPERVISED_LEARNING_RATE = 5e-3  # EXPERIMENTAL
 # can also specify some steps to jump down from initial rate (e.g [(10, 1e-3),
 # (20, 1e-4)] jumps down to 1e-3 after 10 epochs, and down to 1e-4 after 20
 # epochs)
 LEARNING_RATE_STEPS = [(10, 1e-3), (20, 1e-4)]  # EXPERIMENTAL
 # batch size
 SUPERVISED_BATCH_SIZE = 64  # EXPERIMENTAL
-MAX_OPT_EPOCHS = 100
 # number of batches of optimisation per epoch
 OPT_BATCH_PER_EPOCH = 100  # EXPERIMENTAL
 # num of epochs after which to do early stopping if success rate is high but
@@ -26,14 +25,13 @@ SUPERVISED_EARLY_STOP = 20
 SAVE_EVERY_N_EPOCHS = 1
 # heuristic for supervised teacher (if FD)
 SSIPP_TEACHER_HEURISTIC = 'lm-cut'
-FD_TEACHER_HEURISTIC = 'gbf-hadd'
 # type of planner to use as teacher
 TEACHER_PLANNER = 'fd'
 # controls strategy used to teacher the planner; try ANY_GOOD_ACTION if you
 # want the ASNet to choose evenly between all actions that have minimal teacher
 # Q-value, or THERE_CAN_ONLY_BE_ONE to imitate the single action that the
 # planner would return if you just ran it on the current state
-TRAINING_STRATEGY = 'THERE_CAN_ONLY_BE_ONE'
+TRAINING_STRATEGY = 'ANY_GOOD_ACTION'
 # use 'ROLLOUT' to only accumulate optimal policy rollouts, or 'ENVELOPE' to
 # accumulate entire optimal policy envelopes
 TEACHER_EXPERIENCE_MODE = 'ROLLOUT'
@@ -52,7 +50,7 @@ NUM_LAYERS = 2
 HIDDEN_SIZE = 16  # EXPERIMENTAL
 # include skip connections
 SKIP = True
-USE_LMCUT_FEATURES = False
+USE_LMCUT_FEATURES = True
 
 # train + eval settings
 # For Joerg:

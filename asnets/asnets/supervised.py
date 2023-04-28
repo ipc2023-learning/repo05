@@ -1,8 +1,11 @@
 from collections import Counter
 from enum import Enum
 from functools import lru_cache
+import gc
 from itertools import repeat
 import os
+import shutil
+import sys
 from time import time
 from types import ModuleType
 from typing import Any, Callable, Dict, Iterable, List, Tuple
@@ -484,6 +487,9 @@ def make_problem_service(config, set_proc_title=False):
 
                     new_pairs.update(filtered_envelope)
 
+                    gc.collect()
+
+            print(f"generated {len(paths)} paths and {len(new_pairs)} pairs")
             self.replay.update(new_pairs)
 
             return succ_rate
@@ -701,6 +707,7 @@ class SupervisedTrainer:
                  time_out=1000,
                  early_stop=20,
                  save_every=20,
+                 dk="dk"
                  ):
         # gets incremented to deal with TF
         self.batches_seen = 0
@@ -743,6 +750,7 @@ class SupervisedTrainer:
         self.save_every = save_every
         self.scratch_dir = scratch_dir
         self.snapshot_dir = snapshot_dir
+        self.dk = dk
         self._init_tf()
 
     @can_profile
@@ -753,7 +761,6 @@ class SupervisedTrainer:
 
         print("Initializing network structure")
         # using a scheduler to control the learning rate
-        self.lr_steps = [(0, self.lr)] + sorted(self.lr_steps, key=lambda tup: tup[1])
         boundaries = [i[0] for i in self.lr_steps[1:]]
         values = [i[1] for i in self.lr_steps]
         self.lr_scheduler = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
@@ -906,6 +913,7 @@ class SupervisedTrainer:
                     self.snapshot_dir,
                     'snapshot_%d_%f.pkl' % (iter_num, total_succ_rate))
                 self.weight_manager.save(snapshot_path)
+                shutil.copy(snapshot_path, self.dk)
             # also, always save timing data
             with open(os.path.join(self.scratch_dir, 'timing.json'), 'w') as fp:
                 fp.write(self.timer.to_json())
