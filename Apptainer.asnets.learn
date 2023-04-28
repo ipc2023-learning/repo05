@@ -4,7 +4,12 @@ From: ubuntu:22.04
 Stage: build 
 
 %files
-    .
+    asnets
+    benchmarks
+    downward
+    mdpsim
+    pddl-parser
+    ssipp-solver
 
 %post
     apt-get update \
