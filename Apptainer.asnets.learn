@@ -44,11 +44,6 @@ Stage: run
 
 %files from build
     .
-    asnets
-    downward
-    mdpsim
-    pddl-parser
-    ssipp-solver
 
 %post 
 
