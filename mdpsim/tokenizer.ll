@@ -3,7 +3,7 @@
  * Tokenizer.
  *
  * Copyright 2003-2005 Carnegie Mellon University and Rutgers University
- * Copyright 2007 Håkan Younes
+ * Copyright 2007 HÃ¥kan Younes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
