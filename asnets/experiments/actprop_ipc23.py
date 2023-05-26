@@ -26,7 +26,7 @@ SUPERVISED_EARLY_STOP = 20
 SAVE_EVERY_N_EPOCHS = 1
 # heuristic for supervised teacher (if FD)
 SSIPP_TEACHER_HEURISTIC = 'lm-cut'
-FD_TEACHER_HEURISTIC = 'astar-lmcut'
+FD_TEACHER_HEURISTIC = 'lama-first'
 # type of planner to use as teacher
 TEACHER_PLANNER = 'fd'
 # controls strategy used to teacher the planner; try ANY_GOOD_ACTION if you
