@@ -399,7 +399,7 @@ parser.add_argument(
     type=int,
     # default is small b/c anything less than "nearly instant" is going to take
     # a lot of cumulative time
-    default=20,
+    default=60,
     help='teacher timeout, in seconds (must be >0; default 10)')
 parser.add_argument(
     '--plan-file-name',

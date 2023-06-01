@@ -46,7 +46,7 @@ DROPOUT = 0.1   # EXPERIMENTAL
 # target number of ASNet rollouts to add to the replay buffer at the beginning
 # of each epoch (higher = more data, but more planning cost)
 TARGET_ROLLOUTS_PER_EPOCH = 70  # EXPERIMENTAL (moved 90 -> 70 to help PBW)
-LIMIT_TRAIN_OBS_SIZE = 1000
+LIMIT_TRAIN_OBS_SIZE = 5000
 # model flags
 NUM_LAYERS = 2
 HIDDEN_SIZE = 16  # EXPERIMENTAL

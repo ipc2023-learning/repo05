@@ -5,7 +5,6 @@ Stage: build
 
 %files
     asnets
-    benchmarks
     downward
     mdpsim
     pddl-parser
@@ -19,7 +18,12 @@ Stage: build
         libhdf5-dev g++ make git 
 
     pip3 install --upgrade pip
-    pip3 install wheel cython numpy pkgconfig werkzeug
+    pip3 install wheel==0.40.0 \
+                cython==0.29.35 \
+                numpy==1.24.3 \
+                pkgconfig==1.5.5 \
+                werkzeug==2.3.4 \
+                urllib3==1.26.15
 
     # Install Fast Downward
     cd downward && ./build.py release && cd ..
@@ -60,7 +64,7 @@ Stage: run
     shift 2  # Forget first two arguments.
     PROBLEM_FILES=("$@")  # All remaining arguments are problem files.
 
-    asnets/run_learn experiments.actprop_ipc23 "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "${PROBLEM_FILES[@]}"
+    /asnets/run_learn experiments.actprop_ipc23 "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "${PROBLEM_FILES[@]}"
 
     
 %labels
