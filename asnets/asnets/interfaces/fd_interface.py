@@ -194,7 +194,7 @@ def run_fd_raw(planner,
         # fast-downward.py --alias lama-first ${dom} ${prob}
         cmdline.extend([
             domain_bn, problem_bn, "--evaluator",
-            ("hlm=landmark_sum(lm_factory=lm_rhw(),"
+            ("hlm=landmark_sum(lm_factory=lm_reasonable_orders_hps(lm_rhw()),"
              "transform=adapt_costs(one),pref=false)"), "--evaluator",
             "hff=ff(transform=adapt_costs(one))", "--search",
             ("lazy_greedy([hff,hlm],preferred=[hff,hlm],cost_type=one,"
