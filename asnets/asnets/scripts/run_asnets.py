@@ -38,7 +38,7 @@ class CachingPolicyEvaluator(object):
         self._misses = 0
         self._hits = 0
 
-    def get_action(self, obs):
+    def get_action(self, obs, count=1):
         assert obs.ndim == 1
         obs_key = obs.tobytes()
         if obs_key in self.cache:
@@ -52,7 +52,12 @@ class CachingPolicyEvaluator(object):
         # we cache action *distribution* instead of action so that we can draw
         # a different random sample each time (caching should be transparent!)
         if self.det_sample:
-            action = int(np.argmax(act_dist))
+            if count == 1:
+                action = int(np.argmax(act_dist))
+            else:
+                inds = np.argpartition(-act_dist, count)[:count]
+                vals = act_dist[np.argpartition(-act_dist, count)[:count]]
+                action = int(inds[np.argsort(vals)[0]])
         else:
             num_actions = act_dist.shape[-1]
             act_indices = np.arange(num_actions)
@@ -71,9 +76,18 @@ def run_trial(policy_evaluator, problem_server, limit=1000, det_sample=False):
     obs = init_cstate.to_network_input()
     # total cost of this run
     cost = 0
+    states = {} # {state: (position, count)}
     path = []
-    for _ in range(1, limit):
-        action = policy_evaluator.get_action(obs)
+    for step in range(0, limit):
+        if str(obs) in states.keys():
+            loop_index, count = states[str(obs)]
+            path = path[:loop_index]
+            count += 1
+            states[str(obs)] = (loop_index, count)
+        else:
+            count = 1
+            states[str(obs)] = (len(path), count)
+        action = policy_evaluator.get_action(obs, count)
         new_cstate, step_cost = to_local(problem_service.env_step(action))
         new_obs = new_cstate.to_network_input()
         path.append(to_local(problem_service.action_name(action)))
@@ -87,6 +101,7 @@ def run_trial(policy_evaluator, problem_server, limit=1000, det_sample=False):
             break
     # path.append('FAIL! D:')
     return cost, False, path
+
 
 
 def run_trials(policy, problem_server, trials, limit=1000, det_sample=False):
