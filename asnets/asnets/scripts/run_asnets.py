@@ -52,12 +52,17 @@ class CachingPolicyEvaluator(object):
         # we cache action *distribution* instead of action so that we can draw
         # a different random sample each time (caching should be transparent!)
         if self.det_sample:
+            # If it is the first time we enter this state, the take the best action
             if count == 1:
                 action = int(np.argmax(act_dist))
+            # Otherwise, take the next-best action
             else:
-                inds = np.argpartition(-act_dist, count)[:count]
-                vals = act_dist[np.argpartition(-act_dist, count)[:count]]
-                action = int(inds[np.argsort(vals)[0]])
+                if count >= act_dist.shape[0]:
+                    action = -1
+                else:
+                    inds = np.argpartition(-act_dist, count)[:count]
+                    vals = act_dist[np.argpartition(-act_dist, count)[:count]]
+                    action = int(inds[np.argsort(vals)[0]])
         else:
             num_actions = act_dist.shape[-1]
             act_indices = np.arange(num_actions)
@@ -79,15 +84,20 @@ def run_trial(policy_evaluator, problem_server, limit=1000, det_sample=False):
     states = {} # {state: (position, count)}
     path = []
     for step in range(0, limit):
+        # If a state appears before (a loop), remove the loop and try the next-best action
         if str(obs) in states.keys():
             loop_index, count = states[str(obs)]
             path = path[:loop_index]
             count += 1
             states[str(obs)] = (loop_index, count)
+        # record a state when it first appears in the plan
         else:
             count = 1
             states[str(obs)] = (len(path), count)
         action = policy_evaluator.get_action(obs, count)
+        # if cannot break the loop, return "fail"
+        if action < 0:
+            break
         new_cstate, step_cost = to_local(problem_service.env_step(action))
         new_obs = new_cstate.to_network_input()
         path.append(to_local(problem_service.action_name(action)))
