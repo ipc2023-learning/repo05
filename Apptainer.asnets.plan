@@ -18,7 +18,10 @@ Stage: build
         libhdf5-dev g++ make git 
 
     pip3 install --upgrade pip
-    pip3 install wheel cython numpy pkgconfig werkzeug urllib3==1.26.15
+    pip3 install cython==0.29.35 \
+                pkgconfig==1.5.5 \
+                werkzeug==2.3.4 \
+                urllib3==1.26.15
 
     # Install Fast Downward
     cd downward && ./build.py release && cd ..
