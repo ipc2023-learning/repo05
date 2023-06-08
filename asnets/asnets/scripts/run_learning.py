@@ -427,12 +427,13 @@ def main_inner(*,
     # try to solve unsolved cases again with much more aggresive parameters
     still_not_ok = True
     rollout = arch_mod.TARGET_ROLLOUTS_PER_EPOCH
-    heus = 'gbf-hadd'
+    heus = arch_mod.FD_TEACHER_HEURISTIC
     while still_not_ok:
         train_flags = []
         train_flags.extend(train_flags_base)
         rollout = round(rollout * 0.9)
         train_flags.extend(build_arch_flags(arch_mod, rollout=rollout, teacher_heuristic=heus, is_train=True))
+        train_flags.extend(['--teacher-timeout-s', 120])
         train_flags.extend(['--dK', domain_knowledge_name])
         if os.path.exists(domain_knowledge_name):
             train_flags.extend(['--resume-from', domain_knowledge_name])
