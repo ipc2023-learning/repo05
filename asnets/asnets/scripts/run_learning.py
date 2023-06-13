@@ -16,8 +16,8 @@ from time import time
 from pathlib import Path
 import shutil
 
-import ray
 
+_log = logging.getLogger(__name__)
 THIS_DIR = path.dirname(path.abspath(__file__))
 PLANNER_ROOT = path.abspath(path.join(THIS_DIR, '..', '..'))
 # hack to ensure we can find 'experiments' module
@@ -30,40 +30,17 @@ def extract_by_prefix(lines, prefix):
             return line[len(prefix):]
 
 
-def get_pin_list():
-    """Get list of CPU IDs to pin to, using Ray's CPU allocation."""
-    resources = ray.get_resource_ids()
-    cpu_ids = []
-    for cpu_id, cpu_frac in resources['CPU']:
-        # sanity check: we should have 100% of each CPU
-        assert abs(cpu_frac - 1.0) < 1e-5, \
-            "for some reason I have fraction %f of CPU %d (??)" \
-            % (cpu_id, cpu_frac)
-        cpu_ids.append(cpu_id)
-    assert len(cpu_ids) > 0, \
-        "Ray returned no CPU IDs (was num_cpus=0 accidentally specified " \
-        "for this task?)"
-    return cpu_ids
-
-
 def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
                      enforce_ncpus, cwd):
-    """Run ASNets code on current node. May be useful to wrap this in a
-    ray.remote()."""
+    """Run ASNets code on current node."""
     cmdline = []
-    if enforce_ncpus:
-        pin_list = get_pin_list()
-        pin_list_str = ','.join(map(str, pin_list))
-        ts_cmd = ['taskset', '--cpu-list', pin_list_str]
-        logging.info('Pinning job with "%s"' % ' '.join(ts_cmd))
-        cmdline.extend(ts_cmd)
     cmdline.extend(['python3', '-m', 'asnets.scripts.run_asnets'] + flags)
-    logging.info('Running command line "%s"' % ' '.join(cmdline))
+    _log.info('Running command line "%s"' % ' '.join(cmdline))
 
     # we use this for logging
     unique_suffix = md5(' '.join(cmdline).encode('utf8')).hexdigest()
     dest_dir = path.join(root_dir, 'runs', unique_suffix)
-    logging.info('Will write results to %s' % dest_dir)
+    _log.info('Will write results to %s' % dest_dir)
     makedirs(dest_dir, exist_ok=True)
     with open(path.join(dest_dir, 'cmdline'), 'w') as fp:
         fp.write(' '.join(cmdline))
@@ -93,7 +70,7 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
             dfpg_proc.wait(timeout=timeout)
         except TimeoutExpired:
             # uh, oops; better kill everything
-            logging.info('Run timed out after %ss!' % timeout)
+            _log.info('Run timed out after %ss!' % timeout)
             timed_out = True
     finally:
         # "cleanup"
@@ -103,12 +80,12 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
             proc.poll()
             if proc.returncode is None:
                 # make sure it's dead
-                logging.info('Force-killing a process')
+                _log.info('Force-killing a process')
                 proc.terminate()
             proc.wait()
             retcode = proc.returncode
             if retcode != 0:
-                logging.info('Process exited with code %s: %s' %
+                _log.info('Process exited with code %s: %s' %
                       (retcode, ' '.join(proc.args)))
                 bad_retcode = True
 
@@ -122,7 +99,7 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
         with open(path.join(dest_dir, 'is_train'), 'w') as fp:
             # presence of 'is_train' file (in this case containing just a
             # newline) is sufficient to indicate that this was a train run
-            logging.info('', file=fp)
+            fp.write("")
 
     # get stdout for... reasons
     with open(stdout_path, 'r') as fp:
@@ -253,7 +230,7 @@ def build_prob_flags_test(prob_mod, allowed_idxs=None):
     for idx, path_and_name in enumerate(prob_mod.TEST_RUNS):
         pddl_paths, prob_name = path_and_name
         if allowed_idxs is not None and idx not in allowed_idxs:
-            logging.info('Will skip item %d: %s' % (idx, path_and_name))
+            _log.info('Will skip item %d: %s' % (idx, path_and_name))
             continue
         prob_flag = []
         if prob_name is not None:
@@ -331,11 +308,10 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(filename='learn.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
-    logging.info('logbook started')
+    _log.info('logbook started')
 
     # 1. load config
-    logging.info('Importing architecture from %s' % args.arch_module)
+    _log.info('Importing architecture from %s' % args.arch_module)
     arch_mod = import_module(args.arch_module)
 
     # 2. spool up Ray
@@ -351,14 +327,14 @@ def main():
                     or args.job_ncpus <= args.ray_ncpus, \
                     "must have --job-ncpus <= --ray-ncpus if both given"
             ray_kwargs["num_cpus"] = args.ray_ncpus
-    ray.init(**ray_kwargs)
+
     main_inner(arch_mod=arch_mod,
                domain=args.domain_file,
                problems=args.problems,
                job_ncpus=args.job_ncpus,
                domain_knowledge_name=args.domain_knowledge,
                enforce_job_ncpus=args.enforce_job_ncpus)
-    logging.info('Fin :-)')
+    _log.info('Fin :-)')
 
 
 def main_inner(*,
@@ -368,7 +344,6 @@ def main_inner(*,
                job_ncpus,
                enforce_job_ncpus,
                domain_knowledge_name="DK"):
-    run_asnets_ray = ray.remote(num_cpus=job_ncpus)(run_asnets_local)
     root_cwd = getcwd()
 
     arch_name = arch_mod.__name__
@@ -378,10 +353,10 @@ def main_inner(*,
     prefix_dir = 'experiment-results/%s-%s-%s' % (prob_name, arch_name,
                                                     time_str)
     prefix_dir = path.join(root_cwd, prefix_dir)
-    logging.info('Will put experiment results in %s' % prefix_dir)
+    _log.info('Will put experiment results in %s' % prefix_dir)
 
     # 3. train network
-    logging.info('\n\n\n\n\n\nTraining network')
+    _log.info('\n\n\n\n\n\nTraining network')
     train_flags_base = [
         # log and snapshot dirs
         '-e', prefix_dir,
@@ -403,8 +378,7 @@ def main_inner(*,
         trained_problems.append(new_problem)
         print(train_flags)
         try:
-            final_checkpoint = ray.get(
-                run_asnets_ray.remote(
+            final_checkpoint = run_asnets_local(
                     flags=train_flags,
                     # we make sure it runs cmd in same dir as us,
                     # because otherwise Ray subprocs freak out
@@ -413,14 +387,14 @@ def main_inner(*,
                     need_snapshot=True,
                     is_train=True,
                     enforce_ncpus=enforce_job_ncpus,
-                    timeout=arch_mod.TIME_LIMIT_SECONDS))
-            logging.info('Last valid checkpoint is %s' % final_checkpoint)
+                    timeout=arch_mod.TIME_LIMIT_SECONDS)
+            _log.info('Last valid checkpoint is %s' % final_checkpoint)
 
             shutil.copy(final_checkpoint, domain_knowledge_name)
             # return the prefix_dir because hype.py needs that to figure out where to
             # point collate_results at
-        except ray.exceptions.OutOfMemoryError as e:
-            print("out of memory!")
+        except Exception as e:
+            print(f"Something wrong: {e}")
             unsolved_problems.append(train_flags.pop())
             continue
     
@@ -442,8 +416,7 @@ def main_inner(*,
         train_flags.extend(unsolved_problems)
         print(train_flags)
         try:
-            final_checkpoint = ray.get(
-                run_asnets_ray.remote(
+            final_checkpoint = run_asnets_local(
                     flags=train_flags,
                     # we make sure it runs cmd in same dir as us,
                     # because otherwise Ray subprocs freak out
@@ -452,15 +425,15 @@ def main_inner(*,
                     need_snapshot=True,
                     is_train=True,
                     enforce_ncpus=enforce_job_ncpus,
-                    timeout=arch_mod.TIME_LIMIT_SECONDS))
-            logging.info('Last valid checkpoint is %s' % final_checkpoint)
+                    timeout=arch_mod.TIME_LIMIT_SECONDS)
+            _log.info('Last valid checkpoint is %s' % final_checkpoint)
 
             shutil.copy(final_checkpoint, domain_knowledge_name)
             # return the prefix_dir because hype.py needs that to figure out where to
             # point collate_results at
             still_not_ok = False
-        except ray.exceptions.OutOfMemoryError as e:
-            print("out of memory!")
+        except Exception as e:
+            print(f"Something wrong: {e}")
             continue
 
 
