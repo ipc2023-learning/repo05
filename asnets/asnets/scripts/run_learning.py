@@ -32,8 +32,7 @@ def extract_by_prefix(lines, prefix):
 
 def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
                      enforce_ncpus, cwd):
-    """Run ASNets code on current node. May be useful to wrap this in a
-    ray.remote()."""
+    """Run ASNets code on current node."""
     cmdline = []
     cmdline.extend(['python3', '-m', 'asnets.scripts.run_asnets'] + flags)
     _log.info('Running command line "%s"' % ' '.join(cmdline))
@@ -345,7 +344,6 @@ def main_inner(*,
                job_ncpus,
                enforce_job_ncpus,
                domain_knowledge_name="DK"):
-    run_asnets_ray = run_asnets_local()
     root_cwd = getcwd()
 
     arch_name = arch_mod.__name__
@@ -380,7 +378,7 @@ def main_inner(*,
         trained_problems.append(new_problem)
         print(train_flags)
         try:
-            final_checkpoint = run_asnets_ray(
+            final_checkpoint = run_asnets_local(
                     flags=train_flags,
                     # we make sure it runs cmd in same dir as us,
                     # because otherwise Ray subprocs freak out
@@ -395,8 +393,8 @@ def main_inner(*,
             shutil.copy(final_checkpoint, domain_knowledge_name)
             # return the prefix_dir because hype.py needs that to figure out where to
             # point collate_results at
-        except Exception.OutOfMemoryError as e:
-            print("out of memory!")
+        except Exception as e:
+            print(f"Something wrong: {e}")
             unsolved_problems.append(train_flags.pop())
             continue
     
@@ -418,7 +416,7 @@ def main_inner(*,
         train_flags.extend(unsolved_problems)
         print(train_flags)
         try:
-            final_checkpoint = run_asnets_ray(
+            final_checkpoint = run_asnets_local(
                     flags=train_flags,
                     # we make sure it runs cmd in same dir as us,
                     # because otherwise Ray subprocs freak out
@@ -434,8 +432,8 @@ def main_inner(*,
             # return the prefix_dir because hype.py needs that to figure out where to
             # point collate_results at
             still_not_ok = False
-        except Exception.OutOfMemoryError as e:
-            print("out of memory!")
+        except Exception as e:
+            print(f"Something wrong: {e}")
             continue
 
 
