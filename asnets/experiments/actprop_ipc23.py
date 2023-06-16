@@ -59,7 +59,7 @@ USE_LMCUT_FEATURES = True
 # TIME_LIMIT_SECONDS = int(60 * 60 * 8)  # XXX this is probably too much
 # EVAL_ROUNDS = 2  # XXX det only really
 # Normal settings:
-TIME_LIMIT_SECONDS = int(60 * 60 * 72)
+TIME_LIMIT_SECONDS = int(60 * 60 * 24)
 # optionally, we can have lower limit for rollouts in case we have HUGE test
 # problems
 EVAL_TIME_LIMIT_SECONDS = int(60 * 30)
