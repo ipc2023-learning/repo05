@@ -64,7 +64,7 @@ Stage: run
     PROBLEM_FILE="$3"  
     PLAN_FILE="$4"
 
-    asnets/run_plan experiments.actprop_ipc23 "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "$PROBLEM_FILE" "$PLAN_FILE"
+    /asnets/run_plan experiments.actprop_ipc23 "$DOMAIN_KNOWLEDGE_FILE" "$DOMAIN_FILE" "$PROBLEM_FILE" "$PLAN_FILE"
 
     
 %labels
