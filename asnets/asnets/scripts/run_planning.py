@@ -15,8 +15,7 @@ from time import time
 from pathlib import Path
 import shutil
 
-import ray
-
+_log = logging.getLogger(__name__)
 THIS_DIR = path.dirname(path.abspath(__file__))
 PLANNER_ROOT = path.abspath(path.join(THIS_DIR, '..', '..'))
 # hack to ensure we can find 'experiments' module
@@ -29,40 +28,18 @@ def extract_by_prefix(lines, prefix):
             return line[len(prefix):]
 
 
-def get_pin_list():
-    """Get list of CPU IDs to pin to, using Ray's CPU allocation."""
-    resources = ray.get_resource_ids()
-    cpu_ids = []
-    for cpu_id, cpu_frac in resources['CPU']:
-        # sanity check: we should have 100% of each CPU
-        assert abs(cpu_frac - 1.0) < 1e-5, \
-            "for some reason I have fraction %f of CPU %d (??)" \
-            % (cpu_id, cpu_frac)
-        cpu_ids.append(cpu_id)
-    assert len(cpu_ids) > 0, \
-        "Ray returned no CPU IDs (was num_cpus=0 accidentally specified " \
-        "for this task?)"
-    return cpu_ids
-
-
 def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
                      enforce_ncpus, cwd):
     """Run ASNets code on current node. May be useful to wrap this in a
     ray.remote()."""
     cmdline = []
-    if enforce_ncpus:
-        pin_list = get_pin_list()
-        pin_list_str = ','.join(map(str, pin_list))
-        ts_cmd = ['taskset', '--cpu-list', pin_list_str]
-        logging.info('Pinning job with "%s"' % ' '.join(ts_cmd))
-        cmdline.extend(ts_cmd)
-    cmdline.extend(['python', '-m', 'asnets.scripts.run_asnets'] + flags)
-    logging.info('Running command line "%s"' % ' '.join(cmdline))
+    cmdline.extend(['python3', '-m', 'asnets.scripts.run_asnets'] + flags)
+    print('Running command line "%s"' % ' '.join(cmdline))
 
-    # we use this for logging
+    # we use this for log
     unique_suffix = md5(' '.join(cmdline).encode('utf8')).hexdigest()
     dest_dir = path.join(root_dir, 'runs', unique_suffix)
-    logging.info('Will write results to %s' % dest_dir)
+    print('Will write results to %s' % dest_dir)
     makedirs(dest_dir, exist_ok=True)
     with open(path.join(dest_dir, 'cmdline'), 'w') as fp:
         fp.write(' '.join(cmdline))
@@ -91,7 +68,7 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
             dfpg_proc.wait(timeout=timeout)
         except TimeoutExpired:
             # uh, oops; better kill everything
-            logging.info('Run timed out after %ss!' % timeout)
+            print('Run timed out after %ss!' % timeout)
             timed_out = True
     finally:
         # "cleanup"
@@ -101,12 +78,12 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
             proc.poll()
             if proc.returncode is None:
                 # make sure it's dead
-                logging.info('Force-killing a process')
+                print('Force-killing a process')
                 proc.terminate()
             proc.wait()
             retcode = proc.returncode
             if retcode != 0:
-                logging.info('Process exited with code %s: %s' %
+                print('Process exited with code %s: %s' %
                       (retcode, ' '.join(proc.args)))
                 bad_retcode = True
 
@@ -120,7 +97,7 @@ def run_asnets_local(flags, root_dir, need_snapshot, timeout, is_train,
         with open(path.join(dest_dir, 'is_train'), 'w') as fp:
             # presence of 'is_train' file (in this case containing just a
             # newline) is sufficient to indicate that this was a train run
-            logging.info('', file=fp)
+            print('', file=fp)
 
     # get stdout for... reasons
     with open(stdout_path, 'r') as fp:
@@ -250,7 +227,7 @@ def build_prob_flags_test(prob_mod, allowed_idxs=None):
     for idx, path_and_name in enumerate(prob_mod.TEST_RUNS):
         pddl_paths, prob_name = path_and_name
         if allowed_idxs is not None and idx not in allowed_idxs:
-            logging.info('Will skip item %d: %s' % (idx, path_and_name))
+            print('Will skip item %d: %s' % (idx, path_and_name))
             continue
         prob_flag = []
         if prob_name is not None:
@@ -330,27 +307,13 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(filename='plan.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
-    logging.info('logbook started')
+    print('logbook started')
 
     # 1. load config
-    logging.info('Importing architecture from %s' % args.arch_module)
+    print('Importing architecture from %s' % args.arch_module)
     arch_mod = import_module(args.arch_module)
 
-    # 2. spool up Ray
-    new_cluster = args.ray_connect is None
-    ray_kwargs = {}
-    if not new_cluster:
-        ray_kwargs["redis_address"] = args.ray_connect
-        assert args.ray_ncpus is None, \
-            "can't provide --ray-ncpus and --ray-connect"
-    else:
-        if args.ray_ncpus is not None:
-            assert args.job_ncpus is None \
-                    or args.job_ncpus <= args.ray_ncpus, \
-                    "must have --job-ncpus <= --ray-ncpus if both given"
-            ray_kwargs["num_cpus"] = args.ray_ncpus
-    ray.init(**ray_kwargs)
+
     main_inner(arch_mod=arch_mod,
                domain=args.domain_file,
                problem=args.problem,
@@ -358,7 +321,7 @@ def main():
                job_ncpus=args.job_ncpus,
                domain_knowledge_name=args.domain_knowledge,
                enforce_job_ncpus=args.enforce_job_ncpus)
-    logging.info('Fin :-)')
+    print('Fin :-)')
 
 
 def main_inner(*,
@@ -369,7 +332,6 @@ def main_inner(*,
                job_ncpus,
                enforce_job_ncpus,
                domain_knowledge_name="dk"):
-    run_asnets_ray = ray.remote(num_cpus=job_ncpus)(run_asnets_local)
     root_cwd = getcwd()
 
     arch_name = arch_mod.__name__
@@ -379,10 +341,10 @@ def main_inner(*,
     prefix_dir = 'experiment-results/%s-%s-%s' % (prob_name, arch_name,
                                                     time_str)
     prefix_dir = path.join(root_cwd, prefix_dir)
-    logging.info('Will put experiment results in %s' % prefix_dir)
+    print('Will put experiment results in %s' % prefix_dir)
 
     # 3. testing network
-    logging.info('\n\n\n\n\n\nTesting network')
+    print('\n\n\n\n\n\nTesting network')
     main_test_flags = [
         '--no-train',
         # avoid writing extra snapshot & TB files
@@ -396,9 +358,9 @@ def main_inner(*,
     main_test_flags.append(domain)
     main_test_flags.append(problem)
     job_infos = {}
-    logging.info('Launching test on problem %s' % (problem))
+    print('Launching test on problem %s' % (problem))
     full_flags = main_test_flags
-    job = run_asnets_ray.remote(
+    job = run_asnets_local(
         flags=full_flags,
         root_dir=prefix_dir,
         cwd=root_cwd,
@@ -408,14 +370,8 @@ def main_inner(*,
         # run_asnets.py has its own timeout which it should obey, so give
         # it some slack
         timeout=arch_mod.EVAL_TIME_LIMIT_SECONDS + 30)
-    job_infos[job] = (0, problem)
 
-    logging.info("Waiting for jobs to finish")
-    remaining = list(job_infos)
-    while remaining:
-        (ready, ), remaining = ray.wait(remaining, num_returns=1)
-        prob_idx, test_prob_flags = job_infos[ready]
-        logging.info("Finished job %d (problem: %s)" % (prob_idx, test_prob_flags))
+    print("Finished job (problem: %s)" % (problem))
 
     # return the prefix_dir because hype.py needs that to figure out where to
     # point collate_results at
