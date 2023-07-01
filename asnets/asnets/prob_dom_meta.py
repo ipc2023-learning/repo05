@@ -792,7 +792,7 @@ def make_unbound_action(mdpsim_lifted_act: Any) -> UnboundAction:
     """
     schema_name: str = mdpsim_lifted_act.name
     param_names: List[str] = [
-        param.name for param, _ in mdpsim_lifted_act.parameters_and_types
+        param.name for param, _ in mdpsim_lifted_act.parameters
     ]
     rel_props = []
     rel_prop_set = set()
