@@ -158,6 +158,17 @@ const py::list PyLiftedAction::parameters_and_types() {
   return rv;
 }
 
+const py::list PyLiftedAction::parameters() {
+  py::list rv;
+  auto parameters = schema->parameters();
+  for (auto i = parameters.cbegin(); i != parameters.cend(); i++) {
+    auto var = *i;
+
+    rv.append(py::make_tuple(PyVariable(var, domain), ""));
+  }
+  return rv;
+}
+
 // list of (probably lifted) propositions; obviously won't work when you have
 // foralls, etc.
 const py::list PyLiftedAction::involved_propositions() {

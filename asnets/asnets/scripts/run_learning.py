@@ -407,7 +407,7 @@ def main_inner(*,
         train_flags.extend(train_flags_base)
         rollout = round(rollout * 0.9)
         train_flags.extend(build_arch_flags(arch_mod, rollout=rollout, teacher_heuristic=heus, is_train=True))
-        train_flags.extend(['--teacher-timeout-s', 120])
+        train_flags.extend(['--teacher-timeout-s', "120"])
         train_flags.extend(['--dK', domain_knowledge_name])
         if os.path.exists(domain_knowledge_name):
             train_flags.extend(['--resume-from', domain_knowledge_name])

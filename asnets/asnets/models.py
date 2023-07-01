@@ -352,7 +352,9 @@ class PropNetwork(tf.keras.layers.Layer):
             for idx, prop in enumerate(prob_meta.bound_props_ordered)
         }
         rv = {}
-
+        # This is a hack!! Need to fix this later on.
+        to_change = []
+        zero_like_shape = []
         for pred_name in prob_meta.domain.pred_names:
             sub_props = prob_meta.pred_to_props(pred_name)
             gather_inds = []
@@ -360,11 +362,19 @@ class PropNetwork(tf.keras.layers.Layer):
                 to_look_up = prop_to_flat_input_idx[sub_prop]
                 gather_inds.append(to_look_up)
 
-            rv[pred_name] = tf.gather(obs_layer,
+            if len(gather_inds) != 0:
+
+                rv[pred_name] = tf.gather(obs_layer,
                                       gather_inds,
                                       axis=1,
                                       name='split_input/' + pred_name)
+                zero_like_shape = tf.shape(rv[pred_name])
 
+            else: 
+                to_change.append(pred_name)
+        
+        for pred_name in to_change:
+            rv[pred_name] = tf.zeros(zero_like_shape)
         return rv
 
     def _split_extra(self, extra_data):
@@ -373,25 +383,35 @@ class PropNetwork(tf.keras.layers.Layer):
         dictionary just like the rest."""
         prob_meta = self._prob_meta
         out_dict = {}
+        # This is a hack!! Need to fix this later on.
+        to_change = []
+        zero_like_shape = []
         for unbound_act in prob_meta.domain.unbound_acts:
             ground_acts = prob_meta.schema_to_acts(unbound_act)
             sorted_acts = sorted(ground_acts,
                                  key=prob_meta.act_to_schema_subtensor_ind)
-            if len(sorted_acts) == 0:
-                # FIXME: make this message scarier
-                print("no actions for schema %s?" % unbound_act.schema_name)
+            # if len(sorted_acts) == 0:
+            #     # FIXME: make this message scarier
+            #     print("no actions for schema %s?" % unbound_act.schema_name)
             # these are the indices which we must read and concatenate
             tensor_inds = [
                 # TODO: make this linear-time (or linearithmic) by using a dict
                 prob_meta.bound_acts_ordered.index(act) for act in sorted_acts
             ]
 
-            out_dict[unbound_act] = tf.gather(extra_data,
+            if len(tensor_inds) != 0:
+                out_dict[unbound_act] = tf.gather(extra_data,
                                               tensor_inds,
                                               axis=1,
                                               name='split_extra/' +
                                               unbound_act.schema_name)
+                zero_like_shape = tf.shape(out_dict[unbound_act])
 
+            else: 
+                to_change.append(unbound_act)
+        
+        for unbound_act in to_change:
+            out_dict[unbound_act] = tf.zeros(zero_like_shape)
         return out_dict
 
     def call(self, inputs, *args, **kwargs):
@@ -548,64 +568,69 @@ class ActionPropModule:
             # sort input layers so we can index into them properly
             pred_to_tensor_idx, prev_inputs = _sort_inputs(prev_dict)
             dom_meta = self.weight_manager.dom_meta
-            # this tells us how many channels our input will need
-            # [index of the pred in prev_dict,
-            #   [prop index of the pred for each ground action,
-            #   len = num of ground actions]
-            # ] len=num of rel pred.
-            index_spec = []
-            dom_rel_preds = dom_meta.rel_pred_names(self.unbound_clause)
-            for act_pred_idx, arg_pred in enumerate(dom_rel_preds):
-                pools = []
-                for ground_act in self.prob_meta.schema_to_acts(self.unbound_clause):
-                    # we're looking at the act_pred_idx-th relevant proposition
-                    bound_prop = self.prob_meta.rel_props(ground_act)[
-                        act_pred_idx]
-                    prop_idx = self.prob_meta.prop_to_pred_subtensor_ind(
-                        bound_prop)
-                    # we're only "pooling" over one element (the proposition
-                    # features)
-                    pools.append([prop_idx])
-
-                # which tensor do we need to pick this out of?
-                tensor_idx = pred_to_tensor_idx[arg_pred]
-                index_spec.append((tensor_idx, pools))
-
-            extra_chans = []
-            if self.layer_num == 0 and extra_dict is not None:
-                # first action layer, so add in extra data
-                act_data = extra_dict[self.unbound_clause]
-                extra_chans.append(act_data)
-            if self.layer_num > 0 and self.skip:
-                assert prev_layer is not None, \
-                    "act mod in L%d not supplied previous acts for skip conn" \
-                    % self.layer_num
-                extra_chans.append(prev_layer)
-            elif self.layer_num == 0 and self.skip:
-                assert prev_layer is None, "ugh this shouldn't happen in layer 0"
-            if USE_CUSTOM_MULTI_GATHER_CONCAT:
-                with tf.name_scope(self.name_pfx + '/mgc'):
-                    mgc_inputs = []
-                    mgc_elem_indices = []
-                    for tensor_idx, pools in index_spec:
-                        # which pred tensor
-                        mgc_inputs.append(prev_inputs[tensor_idx])
-                        elem_inds = [p for p, in pools]
-                        mgc_elem_indices.append(
-                            tf.constant(elem_inds, dtype=tf.int64))  # which column of the pred tensor
-                    for extra_chan in extra_chans:
-                        mgc_inputs.append(extra_chan)
-                        extra_chan_width = tf.cast(
-                            tf.shape(input=extra_chan)[1], tf.int64)
-                        mgc_elem_indices.append(
-                            tf.range(extra_chan_width, dtype=tf.int64))
-                        # helps out shape inference if extra_chan.shape[1] is known
-                        mgc_elem_indices[-1].set_shape(extra_chan.shape[1])
-                    # shape [None, num_of_actions, len_input(len(props)+extra)]
-                    conv_input = multi_gather_concat(
-                        mgc_inputs, mgc_elem_indices)
+            # hack: if not grounded, create a dummy input
+            if len(self.prob_meta.schema_to_acts(self.unbound_clause)) == 0:
+                batch_size = tf.shape(prev_inputs[0])[0]
+                conv_input = tf.zeros([batch_size, 1, tf.shape(self.w)[0]])
             else:
-                assert False, "Have to set USE_CUSTOM_MULTI_GATHER_CONCAT True"
+                # this tells us how many channels our input will need
+                # [index of the pred in prev_dict,
+                #   [prop index of the pred for each ground action,
+                #   len = num of ground actions]
+                # ] len=num of rel pred.
+                index_spec = []
+                dom_rel_preds = dom_meta.rel_pred_names(self.unbound_clause)
+                for act_pred_idx, arg_pred in enumerate(dom_rel_preds):
+                    pools = []
+                    for ground_act in self.prob_meta.schema_to_acts(self.unbound_clause):
+                        # we're looking at the act_pred_idx-th relevant proposition
+                        bound_prop = self.prob_meta.rel_props(ground_act)[
+                            act_pred_idx]
+                        prop_idx = self.prob_meta.prop_to_pred_subtensor_ind(
+                            bound_prop)
+                        # we're only "pooling" over one element (the proposition
+                        # features)
+                        pools.append([prop_idx])
+
+                    # which tensor do we need to pick this out of?
+                    tensor_idx = pred_to_tensor_idx[arg_pred]
+                    index_spec.append((tensor_idx, pools))
+
+                extra_chans = []
+                if self.layer_num == 0 and extra_dict is not None:
+                    # first action layer, so add in extra data
+                    act_data = extra_dict[self.unbound_clause]
+                    extra_chans.append(act_data)
+                if self.layer_num > 0 and self.skip:
+                    assert prev_layer is not None, \
+                        "act mod in L%d not supplied previous acts for skip conn" \
+                        % self.layer_num
+                    extra_chans.append(prev_layer)
+                elif self.layer_num == 0 and self.skip:
+                    assert prev_layer is None, "ugh this shouldn't happen in layer 0"
+                if USE_CUSTOM_MULTI_GATHER_CONCAT:
+                    with tf.name_scope(self.name_pfx + '/mgc'):
+                        mgc_inputs = []
+                        mgc_elem_indices = []
+                        for tensor_idx, pools in index_spec:
+                            # which pred tensor
+                            mgc_inputs.append(prev_inputs[tensor_idx])
+                            elem_inds = [p for p, in pools]
+                            mgc_elem_indices.append(
+                                tf.constant(elem_inds, dtype=tf.int64))  # which column of the pred tensor
+                        for extra_chan in extra_chans:
+                            mgc_inputs.append(extra_chan)
+                            extra_chan_width = tf.cast(
+                                tf.shape(input=extra_chan)[1], tf.int64)
+                            mgc_elem_indices.append(
+                                tf.range(extra_chan_width, dtype=tf.int64))
+                            # helps out shape inference if extra_chan.shape[1] is known
+                            mgc_elem_indices[-1].set_shape(extra_chan.shape[1])
+                        # shape [None, num_of_actions, len_input(len(props)+extra)]
+                        conv_input = multi_gather_concat(
+                            mgc_inputs, mgc_elem_indices)
+                else:
+                    assert False, "Have to set USE_CUSTOM_MULTI_GATHER_CONCAT True"
             # if self.save_input:
                 # hack so that I can get at input to the convolution when
                 # displaying layer-by-layer network activations (it's easier to do
@@ -615,60 +640,64 @@ class ActionPropModule:
         else:
             act_to_tensor_idx, prev_inputs = _sort_inputs(prev_dict)
             dom_meta = self.weight_manager.dom_meta
-            index_spec = []
-            pred_rela_slots = dom_meta.rel_act_slots(self.unbound_clause)
-            for rel_unbound_act_slot in pred_rela_slots:
-                pools = []
-                for prop in self.prob_meta.pred_to_props(self.unbound_clause):
-                    # we're looking at the act_pred_idx-th relevant proposition
-                    rel_slots = self.prob_meta.rel_act_slots(prop)
-                    ground_acts = [
-                        ground_act for unbound_act, slot, ground_acts in rel_slots
-                        for ground_act in ground_acts
-                        if (unbound_act, slot) == rel_unbound_act_slot
-                    ]
-                    act_inds = [
-                        self.prob_meta.act_to_schema_subtensor_ind(ground_act)
-                        for ground_act in ground_acts
-                    ]
-                    pools.append(act_inds)
-
-                tensor_idx = act_to_tensor_idx[rel_unbound_act_slot[0]]
-                index_spec.append((tensor_idx, pools))
-
-            extra_chans = []
-            if self.layer_num > 0 and self.skip:
-                assert prev_layer is not None, \
-                    "pred mod in L%d not supplied previous acts for skip conn" \
-                    % self.layer_num
-                extra_chans.append(prev_layer)
-            elif self.layer_num == 0 and self.skip:
-                assert prev_layer is None, "ugh this shouldn't happen in layer 0"
-            if USE_CUSTOM_MULTI_POOL_CONCAT:
-                # use a custom fused op to create input to prop module
-                with tf.name_scope(self.name_pfx + '/mpc'):
-                    mpc_inputs = []
-                    mpc_ragged_pools = []
-                    for tensor_idx, py_pools in index_spec:
-                        mpc_inputs.append(prev_inputs[tensor_idx])
-                        flat_pools = sum(py_pools, [])
-                        pool_lens = [len(p) for p in py_pools]
-                        ragged_pool = tf.cast(
-                            tf.RaggedTensor.from_row_lengths(
-                                flat_pools, pool_lens), tf.int64)
-                        mpc_ragged_pools.append(ragged_pool)
-                    assert NONLINEARITY == 'elu', \
-                        'minimum value of -1 is dependent on using elu'
-                    min_value = -1.0
-                    conv_input = multi_pool_concat(mpc_inputs, mpc_ragged_pools,
-                                                   min_value)
-                    if extra_chans:
-                        # TODO: also test adding this directly to
-                        # multi_pool_concat; is it any slower?
-                        conv_input = tf.concat(
-                            [conv_input, *extra_chans], axis=2)
+            if not self.prob_meta.pred_to_props(self.unbound_clause):
+                batch_size = tf.shape(prev_inputs[0])[0]
+                conv_input = tf.zeros([batch_size, 1, tf.shape(self.w)[0]])
             else:
-                assert False, "Have to set USE_CUSTOM_MULTI_POOL_CONCAT True"
+                index_spec = []
+                pred_rela_slots = dom_meta.rel_act_slots(self.unbound_clause)
+                for rel_unbound_act_slot in pred_rela_slots:
+                    pools = []
+                    for prop in self.prob_meta.pred_to_props(self.unbound_clause):
+                        # we're looking at the act_pred_idx-th relevant proposition
+                        rel_slots = self.prob_meta.rel_act_slots(prop)
+                        ground_acts = [
+                            ground_act for unbound_act, slot, ground_acts in rel_slots
+                            for ground_act in ground_acts
+                            if (unbound_act, slot) == rel_unbound_act_slot
+                        ]
+                        act_inds = [
+                            self.prob_meta.act_to_schema_subtensor_ind(ground_act)
+                            for ground_act in ground_acts
+                        ]
+                        pools.append(act_inds)
+
+                    tensor_idx = act_to_tensor_idx[rel_unbound_act_slot[0]]
+                    index_spec.append((tensor_idx, pools))
+
+                extra_chans = []
+                if self.layer_num > 0 and self.skip:
+                    assert prev_layer is not None, \
+                        "pred mod in L%d not supplied previous acts for skip conn" \
+                        % self.layer_num
+                    extra_chans.append(prev_layer)
+                elif self.layer_num == 0 and self.skip:
+                    assert prev_layer is None, "ugh this shouldn't happen in layer 0"
+                if USE_CUSTOM_MULTI_POOL_CONCAT:
+                    # use a custom fused op to create input to prop module
+                    with tf.name_scope(self.name_pfx + '/mpc'):
+                        mpc_inputs = []
+                        mpc_ragged_pools = []
+                        for tensor_idx, py_pools in index_spec:
+                            mpc_inputs.append(prev_inputs[tensor_idx])
+                            flat_pools = sum(py_pools, [])
+                            pool_lens = [len(p) for p in py_pools]
+                            ragged_pool = tf.cast(
+                                tf.RaggedTensor.from_row_lengths(
+                                    flat_pools, pool_lens), tf.int64)
+                            mpc_ragged_pools.append(ragged_pool)
+                        assert NONLINEARITY == 'elu', \
+                            'minimum value of -1 is dependent on using elu'
+                        min_value = -1.0
+                        conv_input = multi_pool_concat(mpc_inputs, mpc_ragged_pools,
+                                                    min_value)
+                        if extra_chans:
+                            # TODO: also test adding this directly to
+                            # multi_pool_concat; is it any slower?
+                            conv_input = tf.concat(
+                                [conv_input, *extra_chans], axis=2)
+                else:
+                    assert False, "Have to set USE_CUSTOM_MULTI_POOL_CONCAT True"
 
         with tf.name_scope(self.name_pfx + '/conv'):
             conv_result = _apply_conv_matmul(conv_input, self.w)

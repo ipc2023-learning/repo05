@@ -71,12 +71,14 @@ Description Action Schema Networks implemented in Tensorflow 2.X
 Authors     Mingyu Hao, Ryan Wang, Sam Toyer, Felipe Trevizan, Sylvie Thiébaux, Lexing Xie
 License     GPL 3
 Tracks      single-core
+
+
 SupportsDerivedPredicates                       no
 SupportsUniversallyQuantifiedPreconditions      no
 SupportsExistentiallyQuantifiedPreconditions    no
 SupportsUniversallyQuantifiedEffects            no
-SupportsNegativePreconditions                   no
-SupportsEqualityPreconditions                   no
+SupportsNegativePreconditions                   yes
+SupportsEqualityPreconditions                   yes
 SupportsInequalityPreconditions                 no
 SupportsConditionalEffects                      no
 SupportsImplyPreconditions                      no

@@ -187,6 +187,8 @@ PYBIND11_PLUGIN(mdpsim) {
     // Lifetime note: returns PyVariables and strings
     .def_property_readonly("parameters_and_types",
                            &PyLiftedAction::parameters_and_types)
+    .def_property_readonly("parameters",
+                           &PyLiftedAction::parameters)
     // list of (predicate, argument list) pairs; obviously won't work when you
     // have foralls, etc.
     .def_property_readonly("involved_propositions",

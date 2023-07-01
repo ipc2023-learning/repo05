@@ -77,8 +77,8 @@ SupportsDerivedPredicates                       no
 SupportsUniversallyQuantifiedPreconditions      no
 SupportsExistentiallyQuantifiedPreconditions    no
 SupportsUniversallyQuantifiedEffects            no
-SupportsNegativePreconditions                   no
-SupportsEqualityPreconditions                   no
+SupportsNegativePreconditions                   yes
+SupportsEqualityPreconditions                   yes
 SupportsInequalityPreconditions                 no
 SupportsConditionalEffects                      no
 SupportsImplyPreconditions                      no

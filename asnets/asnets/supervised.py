@@ -801,10 +801,12 @@ class SupervisedTrainer:
             "network has weird variables---debug this"
 
         all_batches_iter = self._make_batches(n_batches)
-        tr = tqdm.tqdm(all_batches_iter, desc='batch', total=n_batches)
-
+        # use this tqdm for better logs. I comment out this one because 
+        # the competition has log size limitation
+        # tr = tqdm.tqdm(all_batches_iter, desc='batch', total=n_batches, position=0, leave=True)
+        print(f"training on batches...")
         losses = []
-        for feed_dict in tr:
+        for feed_dict in all_batches_iter:
             # Each feed_dict is a list of batched data sets for each problem.
             # Each data set is a tuple of obs_tensor and q-value tensor.
             #
@@ -826,7 +828,7 @@ class SupervisedTrainer:
                     self.optimiser.apply_gradients(
                         grads_and_vars=grads_and_vars)
 
-                    tr.set_postfix(loss=loss)
+                    # tr.set_postfix(loss=loss)
                     losses.append(loss)
 
                     if (self.batches_seen % 10) == 0:
@@ -1015,7 +1017,11 @@ class SupervisedTrainer:
         """Extend the replays for //all// problems asynchronously."""
         # fire off extension methods
         succ_rates = []
-        for problem in tqdm.tqdm(self.problems, desc='spawn extend'):
+        # use this tqdm for better logs. I comment out this one because 
+        # the competition has log size limitation
+        # for problem in tqdm.tqdm(self.problems, desc='spawn extend'):
+        print("Spawning extends...")
+        for problem in self.problems:
             model = problem.policy
             result = problem.problem_service.extend_replay(model,
                                                            num_per_problem,

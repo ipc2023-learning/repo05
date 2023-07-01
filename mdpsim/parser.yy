@@ -762,12 +762,12 @@ name_seq : name { $$ = new std::vector<const std::string*>(1, $1); }
          | name_seq name { $$ = $1; $$->push_back($2); }
          ;
 
-type_spec : '-' { require_typing(); } type { $$ = $3; }
+type_spec : '-' type { $$ = $2; }
           ;
 
 type : object { $$ = new Type(TypeTable::OBJECT); }
-     | type_name { $$ = new Type(make_type($1)); }
-     | '(' either types ')' { $$ = new Type(make_type(*$3)); delete $3; }
+     | { require_typing(); } type_name { $$ = new Type(make_type($2)); }
+     | { require_typing(); } '(' either types ')' { $$ = new Type(make_type(*$4)); delete $4; }
      ;
 
 types : object { $$ = new TypeSet(); }
