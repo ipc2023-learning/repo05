@@ -116,6 +116,7 @@ public:
   const string name() const;
   const string repr() const;
   const py::list parameters_and_types();
+  const py::list parameters();
   // all effect and precondition propositions, including duplicates
   const py::list involved_propositions();
 

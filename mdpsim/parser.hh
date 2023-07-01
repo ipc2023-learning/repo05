@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_YY_Y_TAB_H_INCLUDED
 # define YY_YY_Y_TAB_H_INCLUDED
 /* Debug traces.  */
@@ -40,75 +45,84 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    DEFINE = 258,
-    DOMAIN_TOKEN = 259,
-    PROBLEM = 260,
-    REQUIREMENTS = 261,
-    TYPES = 262,
-    CONSTANTS = 263,
-    PREDICATES = 264,
-    FUNCTIONS = 265,
-    STRIPS = 266,
-    TYPING = 267,
-    NEGATIVE_PRECONDITIONS = 268,
-    DISJUNCTIVE_PRECONDITIONS = 269,
-    EQUALITY = 270,
-    EXISTENTIAL_PRECONDITIONS = 271,
-    UNIVERSAL_PRECONDITIONS = 272,
-    QUANTIFIED_PRECONDITIONS = 273,
-    CONDITIONAL_EFFECTS = 274,
-    FLUENTS = 275,
-    ADL = 276,
-    DURATIVE_ACTIONS = 277,
-    DURATION_INEQUALITIES = 278,
-    CONTINUOUS_EFFECTS = 279,
-    PROBABILISTIC_EFFECTS = 280,
-    REWARDS = 281,
-    MDP = 282,
-    ACTION = 283,
-    PARAMETERS = 284,
-    PRECONDITION = 285,
-    EFFECT = 286,
-    PDOMAIN = 287,
-    OBJECTS = 288,
-    INIT = 289,
-    GOAL = 290,
-    GOAL_REWARD = 291,
-    METRIC = 292,
-    TOTAL_TIME = 293,
-    GOAL_ACHIEVED = 294,
-    WHEN = 295,
-    NOT = 296,
-    AND = 297,
-    OR = 298,
-    IMPLY = 299,
-    EXISTS = 300,
-    FORALL = 301,
-    PROBABILISTIC = 302,
-    ASSIGN = 303,
-    SCALE_UP = 304,
-    SCALE_DOWN = 305,
-    INCREASE = 306,
-    DECREASE = 307,
-    MINIMIZE = 308,
-    MAXIMIZE = 309,
-    NUMBER_TOKEN = 310,
-    OBJECT_TOKEN = 311,
-    EITHER = 312,
-    LE = 313,
-    GE = 314,
-    NAME = 315,
-    VARIABLE = 316,
-    NUMBER = 317,
-    ILLEGAL_TOKEN = 318
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    DEFINE = 258,                  /* DEFINE  */
+    DOMAIN_TOKEN = 259,            /* DOMAIN_TOKEN  */
+    PROBLEM = 260,                 /* PROBLEM  */
+    REQUIREMENTS = 261,            /* REQUIREMENTS  */
+    TYPES = 262,                   /* TYPES  */
+    CONSTANTS = 263,               /* CONSTANTS  */
+    PREDICATES = 264,              /* PREDICATES  */
+    FUNCTIONS = 265,               /* FUNCTIONS  */
+    STRIPS = 266,                  /* STRIPS  */
+    TYPING = 267,                  /* TYPING  */
+    NEGATIVE_PRECONDITIONS = 268,  /* NEGATIVE_PRECONDITIONS  */
+    DISJUNCTIVE_PRECONDITIONS = 269, /* DISJUNCTIVE_PRECONDITIONS  */
+    EQUALITY = 270,                /* EQUALITY  */
+    EXISTENTIAL_PRECONDITIONS = 271, /* EXISTENTIAL_PRECONDITIONS  */
+    UNIVERSAL_PRECONDITIONS = 272, /* UNIVERSAL_PRECONDITIONS  */
+    QUANTIFIED_PRECONDITIONS = 273, /* QUANTIFIED_PRECONDITIONS  */
+    CONDITIONAL_EFFECTS = 274,     /* CONDITIONAL_EFFECTS  */
+    FLUENTS = 275,                 /* FLUENTS  */
+    ADL = 276,                     /* ADL  */
+    DURATIVE_ACTIONS = 277,        /* DURATIVE_ACTIONS  */
+    DURATION_INEQUALITIES = 278,   /* DURATION_INEQUALITIES  */
+    CONTINUOUS_EFFECTS = 279,      /* CONTINUOUS_EFFECTS  */
+    PROBABILISTIC_EFFECTS = 280,   /* PROBABILISTIC_EFFECTS  */
+    REWARDS = 281,                 /* REWARDS  */
+    MDP = 282,                     /* MDP  */
+    ACTION = 283,                  /* ACTION  */
+    PARAMETERS = 284,              /* PARAMETERS  */
+    PRECONDITION = 285,            /* PRECONDITION  */
+    EFFECT = 286,                  /* EFFECT  */
+    PDOMAIN = 287,                 /* PDOMAIN  */
+    OBJECTS = 288,                 /* OBJECTS  */
+    INIT = 289,                    /* INIT  */
+    GOAL = 290,                    /* GOAL  */
+    GOAL_REWARD = 291,             /* GOAL_REWARD  */
+    METRIC = 292,                  /* METRIC  */
+    TOTAL_TIME = 293,              /* TOTAL_TIME  */
+    GOAL_ACHIEVED = 294,           /* GOAL_ACHIEVED  */
+    WHEN = 295,                    /* WHEN  */
+    NOT = 296,                     /* NOT  */
+    AND = 297,                     /* AND  */
+    OR = 298,                      /* OR  */
+    IMPLY = 299,                   /* IMPLY  */
+    EXISTS = 300,                  /* EXISTS  */
+    FORALL = 301,                  /* FORALL  */
+    PROBABILISTIC = 302,           /* PROBABILISTIC  */
+    ASSIGN = 303,                  /* ASSIGN  */
+    SCALE_UP = 304,                /* SCALE_UP  */
+    SCALE_DOWN = 305,              /* SCALE_DOWN  */
+    INCREASE = 306,                /* INCREASE  */
+    DECREASE = 307,                /* DECREASE  */
+    MINIMIZE = 308,                /* MINIMIZE  */
+    MAXIMIZE = 309,                /* MAXIMIZE  */
+    NUMBER_TOKEN = 310,            /* NUMBER_TOKEN  */
+    OBJECT_TOKEN = 311,            /* OBJECT_TOKEN  */
+    EITHER = 312,                  /* EITHER  */
+    LE = 313,                      /* LE  */
+    GE = 314,                      /* GE  */
+    NAME = 315,                    /* NAME  */
+    VARIABLE = 316,                /* VARIABLE  */
+    NUMBER = 317,                  /* NUMBER  */
+    ILLEGAL_TOKEN = 318            /* ILLEGAL_TOKEN  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define DEFINE 258
 #define DOMAIN_TOKEN 259
 #define PROBLEM 260
@@ -173,10 +187,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 266 "parser.yy" /* yacc.c:1909  */
+#line 266 "parser.yy"
 
   const Effect* effect;
   std::vector<std::pair<Rational, const Effect*> >* outcomes;
@@ -190,9 +203,9 @@ union YYSTYPE
   std::vector<const std::string*>* strs;
   const Rational* num;
 
-#line 194 "parser.hh" /* yacc.c:1909  */
-};
+#line 207 "parser.hh"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -201,6 +214,8 @@ typedef union YYSTYPE YYSTYPE;
 
 extern YYSTYPE yylval;
 
+
 int yyparse (void);
+
 
 #endif /* !YY_YY_Y_TAB_H_INCLUDED  */
