@@ -390,9 +390,9 @@ class PropNetwork(tf.keras.layers.Layer):
             ground_acts = prob_meta.schema_to_acts(unbound_act)
             sorted_acts = sorted(ground_acts,
                                  key=prob_meta.act_to_schema_subtensor_ind)
-            if len(sorted_acts) == 0:
-                # FIXME: make this message scarier
-                print("no actions for schema %s?" % unbound_act.schema_name)
+            # if len(sorted_acts) == 0:
+            #     # FIXME: make this message scarier
+            #     print("no actions for schema %s?" % unbound_act.schema_name)
             # these are the indices which we must read and concatenate
             tensor_inds = [
                 # TODO: make this linear-time (or linearithmic) by using a dict
