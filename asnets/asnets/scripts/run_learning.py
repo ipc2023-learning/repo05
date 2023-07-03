@@ -364,6 +364,7 @@ def main_inner(*,
     trained_problems = [problems.pop(0)]
     unsolved_problems = []
     final_checkpoint = None
+    tolerence = 0
     while problems:
         train_flags = []
         train_flags.extend(train_flags_base)
@@ -396,7 +397,11 @@ def main_inner(*,
         except Exception as e:
             print(f"Something wrong: {e}")
             unsolved_problems.append(train_flags.pop())
-            continue
+            tolerence += 1
+            if tolerence > 10:
+                break
+            else:
+                continue
     
     # try to solve unsolved cases again with much more aggresive parameters
     still_not_ok = True
@@ -434,7 +439,11 @@ def main_inner(*,
             still_not_ok = False
         except Exception as e:
             print(f"Something wrong: {e}")
-            continue
+            tolerence += 1
+            if tolerence > 20:
+                break
+            else:
+                continue
 
 
     return prefix_dir
