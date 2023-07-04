@@ -622,7 +622,7 @@ def make_services(args):
         print('Starting service and policy for %s' % problem_name)
         problem = SingleProblem(problem_name, problem_server)
         print(f"Problem {problem_name} has obs_dim {problem.obs_dim}")
-        if not args.no_train and problem.obs_dim <= int(args.limit_train_obs_size):
+        if args.no_train or problem.obs_dim <= int(args.limit_train_obs_size):
             problem.policy, weight_manager = make_policy(
                 args,
                 problem.obs_dim,
