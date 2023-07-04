@@ -4,4 +4,6 @@ learn.img
 learn.sif
 plan.img
 /benchmarks/
-/asnets/asnets/__pycache__/
+.idea/
+asnets/asnets/__pycache__/
+
