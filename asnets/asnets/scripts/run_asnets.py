@@ -83,17 +83,18 @@ def run_trial(policy_evaluator, problem_server, limit=1000, det_sample=False):
     cost = 0
     states = {} # {state: (position, count)}
     path = []
+    cur_state = init_cstate
     for step in range(0, limit):
         # If a state appears before (a loop), remove the loop and try the next-best action
-        if str(obs) in states.keys():
-            loop_index, count = states[str(obs)]
+        if cur_state in states.keys():
+            loop_index, count = states[cur_state]
             path = path[:loop_index]
             count += 1
-            states[str(obs)] = (loop_index, count)
+            states[cur_state] = (loop_index, count)
         # record a state when it first appears in the plan
         else:
             count = 1
-            states[str(obs)] = (len(path), count)
+            states[cur_state] = (len(path), count)
         action = policy_evaluator.get_action(obs, count)
         # if cannot break the loop, return "fail"
         if action < 0:
@@ -102,6 +103,7 @@ def run_trial(policy_evaluator, problem_server, limit=1000, det_sample=False):
         new_obs = new_cstate.to_network_input()
         path.append(to_local(problem_service.action_name(action)))
         obs = new_obs
+        cur_state = new_cstate
         cost += step_cost
         if new_cstate.is_goal:
             # path.append('GOAL! :D')
@@ -708,6 +710,8 @@ def main():
     rpyc.core.protocol.DEFAULT_CONFIG.update({
         # this is required for rpyc to allow pickling
         'allow_pickle': True,
+        # "allow_all_attrs": True,
+        "allow_public_attrs" : True,
         # required for some large problems where get_action() (passed as
         # synchronous callback to child processes) can take a very long time
         # the first time it is called

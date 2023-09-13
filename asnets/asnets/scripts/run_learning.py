@@ -362,6 +362,7 @@ def main_inner(*,
         '-e', prefix_dir,
     ]  # yapf: disable
     trained_problems = [problems.pop(0)]
+    trained_problems.append(problems.pop(0))
     unsolved_problems = []
     final_checkpoint = None
     tolerence = 0
@@ -374,6 +375,8 @@ def main_inner(*,
             train_flags.extend(['--resume-from', domain_knowledge_name])
         train_flags.append(domain)
         train_flags.extend(trained_problems)
+        new_problem = problems.pop(0)
+        train_flags.append(new_problem)
         new_problem = problems.pop(0)
         train_flags.append(new_problem)
         trained_problems.append(new_problem)

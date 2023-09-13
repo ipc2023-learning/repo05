@@ -63,7 +63,7 @@ TIME_LIMIT_SECONDS = int(60 * 60 * 24)
 # optionally, we can have lower limit for rollouts in case we have HUGE test
 # problems
 EVAL_TIME_LIMIT_SECONDS = int(60 * 30)
-ROUND_TURN_LIMIT = 300
+ROUND_TURN_LIMIT = 1000
 
 # deterministic eval, so only need one round
 EVAL_ROUNDS = 1

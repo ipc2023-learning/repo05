@@ -67,15 +67,56 @@ void build_maps(const Problem *problem, AtomList &atom_vec,
     (*ei)->listAtoms(atom_set, atom_vec);
   }
 
+  int iteration_count = 0;
   // expand by looking at atoms which can be produced by enabled actions
   // (remove actions which have already been used)
   while (true) {
     // Get enabled actions in the list of unused actions.
     problem->enabled_actions_noValues(remaining_actions, actions, atom_set);
 
+#if 0
+    iteration_count++;
+    std::cout << "\033[1;32mIteration: " << iteration_count << "\033[0m\n";
+
+    // Print atom_set
+    std::cout << "\033[1;34matom_set: ";
+    for(auto const& atom : atom_set){
+      std::cout << *atom << " ";
+    }
+    std::cout << "\033[0m\n";
+
+    // Print remaining_actions
+    std::cout << "\033[1;34mremaining_actions: ";
+    for(auto const& action : remaining_actions){
+      std::cout << *action << " ";
+    }
+    std::cout << "\033[0m\n";
+
+    // Print action_vec
+    std::cout << "\033[1;34maction_vec: ";
+    for(auto const& action : action_vec){
+      std::cout << *action << " ";
+    }
+    std::cout << "\033[0m\n";
+
+    // Print actions
+    std::cout << "\033[1;34mactions: ";
+    for(auto const& action : actions){
+      std::cout << *action << " ";
+    }
+    std::cout << "\033[0m\n";
+
     /* If no enabled actions: step out. */
-    if (actions.size() == 0)
+    if (actions.size() == 0) {
+      std::cout << "\033[1;31mNo enabled actions, breaking loop!\033[0m\n";
       break;
+    }
+#else
+  /* If no enabled actions: step out. */
+  if (actions.size() == 0) {
+    break;
+  }
+#endif
 
     /* For each enabled action: */
     for (auto ai = actions.cbegin();

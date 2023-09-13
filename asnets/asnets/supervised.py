@@ -761,12 +761,12 @@ class SupervisedTrainer:
 
         print("Initializing network structure")
         # using a scheduler to control the learning rate
-        boundaries = [i[0] for i in self.lr_steps[1:]]
-        values = [i[1] for i in self.lr_steps]
-        self.lr_scheduler = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
-            boundaries, values)
+        # boundaries = [i[0] for i in self.lr_steps[1:]]
+        # values = [i[1] for i in self.lr_steps]
+        # self.lr_scheduler = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
+        #     boundaries, values)
         self.optimiser = tf.keras.optimizers.Adam(
-            learning_rate=self.lr_scheduler)
+            learning_rate=self.lr)
 
         self.loss_fn = ManualLoss(
             problems=self.problems,
@@ -803,10 +803,10 @@ class SupervisedTrainer:
         all_batches_iter = self._make_batches(n_batches)
         # use this tqdm for better logs. I comment out this one because 
         # the competition has log size limitation
-        # tr = tqdm.tqdm(all_batches_iter, desc='batch', total=n_batches, position=0, leave=True)
+        tr = tqdm.tqdm(all_batches_iter, desc='batch', total=n_batches, position=0, leave=True)
         print(f"training on batches...")
         losses = []
-        for feed_dict in all_batches_iter:
+        for feed_dict in tr:
             # Each feed_dict is a list of batched data sets for each problem.
             # Each data set is a tuple of obs_tensor and q-value tensor.
             #
@@ -828,7 +828,7 @@ class SupervisedTrainer:
                     self.optimiser.apply_gradients(
                         grads_and_vars=grads_and_vars)
 
-                    # tr.set_postfix(loss=loss)
+                    tr.set_postfix(loss=loss)
                     losses.append(loss)
 
                     if (self.batches_seen % 10) == 0:
@@ -1014,7 +1014,7 @@ class SupervisedTrainer:
 
     @can_profile
     def _extend_replays(self, num_per_problem):
-        """Extend the replays for //all// problems asynchronously."""
+        """Extend the replays for //all// problems."""
         # fire off extension methods
         succ_rates = []
         # use this tqdm for better logs. I comment out this one because 
@@ -1026,22 +1026,9 @@ class SupervisedTrainer:
             result = problem.problem_service.extend_replay(model,
                                                            num_per_problem,
                                                            no_plan=bool(self.use_saved_training_set))
-            # apparently I need to keep hold of async ref according to RPyC
-            # docs (it's weak or s.th). Also, I need a background thread to
-            # serve each environment's requests (...this may break things
-            # slightly).
-            # bg_thread = rpyc.utils.helpers.BgServingThread(
-            #     problem.problem_server.conn)
+
             succ_rates.append((problem, result))
 
-        # Now we wait for results to come back. This is horribly inefficient
-        # when some environments are much harder than others; oh well.
-        # succ_rates = []
-        # for problem, result in tqdm.tqdm(
-        #         results, desc='wait extend'):
-        #     succ_rates.append((problem, to_local(result)))
-            # always shut down cleanly
-            # bg_thread.stop()
 
         return succ_rates
 

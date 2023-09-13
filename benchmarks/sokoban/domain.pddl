@@ -1,69 +1,34 @@
-(define (domain sokoban-sequential)
-  (:requirements :typing :action-costs)
-  (:types thing location direction - object
-          player stone - thing)
-  (:predicates (clear ?l - location)
-	       (at ?t - thing ?l - location)
-	       (at-goal ?s - stone)
-	       (IS-GOAL ?l - location)
-	       (IS-NONGOAL ?l - location)
-               (MOVE-DIR ?from ?to - location ?dir - direction))
-  (:functions (total-cost) - number)
+;; source: https://github.com/AI-Planning/pddl-generators/blob/main/sokoban/domain.pddl
+;; updates:
+;;   - only focus on microban instances, hence 4 constant directions
+;;
+(define (domain sokoban)
+(:requirements :typing)
+(:types location direction box)
 
-  (:action move
-   :parameters (?p - player ?from ?to - location ?dir - direction)
-   :precondition (and (at ?p ?from)
-                      (clear ?to)
-                      (MOVE-DIR ?from ?to ?dir)
-                      )
-   :effect       (and (not (at ?p ?from))
-                      (not (clear ?to))
-                      (at ?p ?to)
-                      (clear ?from)
-                      )
-   )
+(:constants down up left right - direction)
 
-  (:action push-to-nongoal
-   :parameters (?p - player ?s - stone
-                ?ppos ?from ?to - location
-                ?dir - direction)
-   :precondition (and (at ?p ?ppos)
-                      (at ?s ?from)
-                      (clear ?to)
-                      (MOVE-DIR ?ppos ?from ?dir)
-                      (MOVE-DIR ?from ?to ?dir)
-                      (IS-NONGOAL ?to)
-                      )
-   :effect       (and (not (at ?p ?ppos))
-                      (not (at ?s ?from))
-                      (not (clear ?to))
-                      (at ?p ?from)
-                      (at ?s ?to)
-                      (clear ?ppos)
-                      (not (at-goal ?s))
-                      (increase (total-cost) 1)
-                      )
-   )
-
-  (:action push-to-goal
-   :parameters (?p - player ?s - stone
-                ?ppos ?from ?to - location
-                ?dir - direction)
-   :precondition (and (at ?p ?ppos)
-                      (at ?s ?from)
-                      (clear ?to)
-                      (MOVE-DIR ?ppos ?from ?dir)
-                      (MOVE-DIR ?from ?to ?dir)
-                      (IS-GOAL ?to)
-                      )
-   :effect       (and (not (at ?p ?ppos))
-                      (not (at ?s ?from))
-                      (not (clear ?to))
-                      (at ?p ?from)
-                      (at ?s ?to)
-                      (clear ?ppos)
-                      (at-goal ?s)
-                      (increase (total-cost) 1)
-                      )
-   )
+(:predicates
+             (at-robot ?l - location)
+             (at ?o - box ?l - location)
+             (adjacent ?l1 - location ?l2 - location ?d - direction) 
+             (clear ?l - location)
 )
+
+(:action move
+:parameters (?from - location ?to - location ?dir - direction)
+:precondition (and (clear ?to) (at-robot ?from) (adjacent ?from ?to ?dir))
+:effect (and (at-robot ?to) (not (at-robot ?from)))
+)
+             
+
+(:action push
+:parameters  (?rloc - location ?bloc - location ?floc - location ?dir - direction ?b - box)
+:precondition (and (at-robot ?rloc) (at ?b ?bloc) (clear ?floc)
+	           (adjacent ?rloc ?bloc ?dir) (adjacent ?bloc ?floc ?dir))
+
+:effect (and (at-robot ?bloc) (at ?b ?floc) (clear ?bloc)
+             (not (at-robot ?rloc)) (not (at ?b ?bloc)) (not (clear ?floc)))
+)
+)
+
