@@ -1,8 +1,0 @@
-
-
-./learn.sif test.dk \
-    /home/ming/Codes/benchmarks-old/test_run/domain.pddl \
-    /home/ming/Codes/benchmarks-old/test_run/p01.pddl \
-    /home/ming/Codes/benchmarks-old/test_run/p02.pddl \
-    /home/ming/Codes/benchmarks-old/test_run/p03.pddl \
-    /home/ming/Codes/benchmarks-old/test_run/p04.pddl
