@@ -828,7 +828,7 @@ class SupervisedTrainer:
                     self.optimiser.apply_gradients(
                         grads_and_vars=grads_and_vars)
 
-                    tr.set_postfix(loss=loss)
+                    # tr.set_postfix(loss=loss)
                     losses.append(loss)
 
                     if (self.batches_seen % 10) == 0:
