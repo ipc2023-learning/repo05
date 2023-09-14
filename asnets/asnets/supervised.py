@@ -803,10 +803,10 @@ class SupervisedTrainer:
         all_batches_iter = self._make_batches(n_batches)
         # use this tqdm for better logs. I comment out this one because 
         # the competition has log size limitation
-        tr = tqdm.tqdm(all_batches_iter, desc='batch', total=n_batches, position=0, leave=True)
+        # tr = tqdm.tqdm(all_batches_iter, desc='batch', total=n_batches, position=0, leave=True)
         print(f"training on batches...")
         losses = []
-        for feed_dict in tr:
+        for feed_dict in all_batches_iter:
             # Each feed_dict is a list of batched data sets for each problem.
             # Each data set is a tuple of obs_tensor and q-value tensor.
             #
