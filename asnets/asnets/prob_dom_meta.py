@@ -381,7 +381,7 @@ class DomainMeta:
         to_delete = []
         for pred_name in self.pred_names:
             rel_act_slots = self.rel_act_slots(pred_name)
-            if len(rel_act_slots) <= 0:
+            if not rel_act_slots:
                 to_delete.append(pred_name)
         new_pred_names = list(self.pred_names)
         for pred_name in to_delete:
