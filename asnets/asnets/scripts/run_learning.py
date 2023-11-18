@@ -377,8 +377,6 @@ def main_inner(*,
         train_flags.extend(trained_problems)
         new_problem = problems.pop(0)
         train_flags.append(new_problem)
-        new_problem = problems.pop(0)
-        train_flags.append(new_problem)
         trained_problems.append(new_problem)
         print(train_flags)
         try:
