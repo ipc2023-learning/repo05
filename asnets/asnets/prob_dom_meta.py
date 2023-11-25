@@ -378,6 +378,16 @@ class DomainMeta:
         self.name = name
         self.unbound_acts: Tuple[UnboundAction] = tuple(unbound_acts)
         self.pred_names = tuple(pred_names)
+        to_delete = []
+        for pred_name in self.pred_names:
+            rel_act_slots = self.rel_act_slots(pred_name)
+            if not rel_act_slots:
+                to_delete.append(pred_name)
+        new_pred_names = list(self.pred_names)
+        for pred_name in to_delete:
+            new_pred_names.remove(pred_name)
+
+        self.pred_names = tuple(new_pred_names)
 
     def __repr__(self) -> str:
         """Return a string representation of this domain.

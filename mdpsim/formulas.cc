@@ -935,7 +935,19 @@ bool Negation::holds(const TermTable& terms,
 /* Tests if this state formula holds in the given state. */
 bool Negation::holds_noValues(const TermTable& terms,
 		     const AtomSet& atoms) const {
-    return !negand().holds_noValues(terms, atoms);
+    /* XXX(sam, 2023-07-07): holds_noValues() for negative conditions is really
+     * dicey: for atoms etc., holds_noValues should simply return true iff that
+     * atom has been instantiated, regardless of its value, thanks to the closed
+     * world assumption. Evaluating negation is much harder, since we need to
+     * check whether it was ever the case that the negated condition was not true
+     * in the past. This cannot be accomplished just by looking at the atom set.
+     *
+     * For now I'm side-stepping this by always returning true, which is an
+     * over-approximation of the thing we really want. This may or may not be okay.
+     *
+     * return !negand().holds_noValues(terms, atoms);
+     */
+    return true;
 }
 
 /* Progress estimator. */

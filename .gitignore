@@ -3,7 +3,14 @@
 learn.img
 learn.sif
 plan.img
-/benchmarks/
 .idea/
 asnets/asnets/__pycache__/
-
+asnets/asnets/domain_specific/__pycache__/
+downward/builds/
+asnets/asnets/utils/__pycache__/
+downward/driver/__pycache__/
+asnets/asnets/utils/__pycache__/
+asnets/asnets/interfaces/__pycache__/
+asnets/experiments/__pycache__/
+asnets/asnets/ops/__pycache__/
+downward/__pycache__/

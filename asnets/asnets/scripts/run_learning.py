@@ -362,6 +362,7 @@ def main_inner(*,
         '-e', prefix_dir,
     ]  # yapf: disable
     trained_problems = [problems.pop(0)]
+    trained_problems.append(problems.pop(0))
     unsolved_problems = []
     final_checkpoint = None
     tolerence = 0
