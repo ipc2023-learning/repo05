@@ -2,39 +2,39 @@
 
 ### To Install
 
-1. Download and install [Apptainer](https://apptainer.org/docs/admin/main/installation.html)
-
-2. Clone this project to `CONTENT_ROOT`
-
-3. Open `CONTENT_ROOT` in terminal, and run 
-
-   ```bash
-   apptainer build learn.sif apptainer.asnets.learn
-   apptainer build plan.sif apptainer.asnets.plan
-   ```
-
-   
+1. Download and install *Docker* and *VSCode*
+2. Clone and open this project in *VSCode*
+3. Install all the Microsoft "remote" extensions
+4. Open control palette, and select "Dev Containers: Reopen in Container"
 
 
 ### To run
 
-1. To run the learning script:
+1. Open up a new terminal and run:
+
+```source venv-asnets/bin/activate```
+
+2. To run the learning script:
 
 ```bash
-./learn.sif DK DOMAIN TASK1 TASK2 ...
+python asnets/run_learn experiments.actprop_ipc23 {dk} {domain_file} {problem_files_1}...{problem_files_n} 
 ```
 
-The learner will write its learned domain knowledge (i.e. the policy model) into the “DK” file. 
+Where ```experiments.actprop_ipc23``` contains all hyperparameters, and ```{dk}``` is the name of learnt policy. To successfully run the script, you need to pass at least four problems.
 
-2. To run the planning script:
-
+Example:
 ```bash
-./plan DK DOMAIN TASK PLAN
+python asnets/run_learn experiments.actprop_ipc23 dk benchmarks/blocksworld/domain.pddl benchmarks/blocksworld/training/easy/p01.pddl benchmarks/blocksworld/training/easy/p02.pddl benchmarks/blocksworld/training/easy/p03.pddl benchmarks/blocksworld/training/easy/p04.pddl
 ```
 
-The planner will write the plan into the "PLAN" file.
+3. To run the planning script:
+```bash
+python asnets/run_plan experiments.actprop_ipc23 {dk} {domain_file} {problem_file} 
+```
 
+Where ```experiments.actprop_ipc23``` contains all hyperparameters, and ```{dk}``` is the name of learnt policy. To successfully run the script, only one problem should be passed.
 
-
-For more detail about this submission we refer to the [competition's website](https://ipc2023-learning.github.io/#submission). 
-
+Example:
+```bash
+python asnets/run_plan experiments.actprop_ipc23 dk benchmarks/blocksworld/domain.pddl benchmarks/blocksworld/training/easy/p01.pddl
+```
