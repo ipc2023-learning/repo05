@@ -1,40 +1,41 @@
 ## ASNets - IPC23
 
-### To Install
+### To Build
 
-1. Download and install *Docker* and *VSCode*
-2. Clone and open this project in *VSCode*
-3. Install all the Microsoft "remote" extensions
-4. Open control palette, and select "Dev Containers: Reopen in Container"
+1. Download and install [Apptainer](https://apptainer.org/docs/admin/main/installation.html)
+2. Run `apptainer build learn.sif apptainer.asnets.learn` and 
+3. Run `apptainer build plan.sif apptainer.asnets.plan`
 
 
 ### To run
 
-1. Open up a new terminal and run:
-
-```source venv-asnets/bin/activate```
-
-2. To run the learning script:
+1. To run the learning script:
 
 ```bash
-python asnets/run_learn experiments.actprop_ipc23 {dk} {domain_file} {problem_files_1}...{problem_files_n} 
+./learn.sif DK DOMAIN TASK1 TASK2 ...
 ```
 
-Where ```experiments.actprop_ipc23``` contains all hyperparameters, and ```{dk}``` is the name of learnt policy. To successfully run the script, you need to pass at least four problems.
+Where ```DK``` is the name of output policy. To successfully run the script,  at least provide four tasks.
 
 Example:
+
 ```bash
-python asnets/run_learn experiments.actprop_ipc23 dk benchmarks/blocksworld/domain.pddl benchmarks/blocksworld/training/easy/p01.pddl benchmarks/blocksworld/training/easy/p02.pddl benchmarks/blocksworld/training/easy/p03.pddl benchmarks/blocksworld/training/easy/p04.pddl
+./learn.sif policy.dt benchmarks/blocksworld/domain.pddl benchmarks/blocksworld/training/easy/p01.pddl benchmarks/blocksworld/training/easy/p02.pddl benchmarks/blocksworld/training/easy/p03.pddl benchmarks/blocksworld/training/easy/p04.pddl
 ```
 
-3. To run the planning script:
+2. To run the planning script:
+
 ```bash
-python asnets/run_plan experiments.actprop_ipc23 {dk} {domain_file} {problem_file} 
+./plan.sif DK DOMAIN TASK PLAN
 ```
 
-Where ```experiments.actprop_ipc23``` contains all hyperparameters, and ```{dk}``` is the name of learnt policy. To successfully run the script, only one problem should be passed.
+Where ```DK``` is the name of learnt policy and `PLAN` is the name of the output plan file. To successfully run the script, only one problem should be given.
 
 Example:
+
 ```bash
-python asnets/run_plan experiments.actprop_ipc23 dk benchmarks/blocksworld/domain.pddl benchmarks/blocksworld/training/easy/p01.pddl
+./plan.sif dk benchmarks/blocksworld/domain.pddl benchmarks/blocksworld/training/easy/p01.pddl
 ```
+
+For more detail please find on the [competition website](https://ipc2023-learning.github.io/).
+
