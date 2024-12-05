@@ -9,7 +9,8 @@ from setuptools.command.develop import develop
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-TF_REQUIRE = 'tensorflow>=2.9.0,<3.0.0'
+TF_REQUIRE = 'tensorflow==2.11.1'
+
 
 def _build_ext(ext_obj):
     """Build C/C++ implementation of ASNet-specific TF ops."""
@@ -24,7 +25,8 @@ def _build_ext(ext_obj):
     # Tests still pass with -Ofast, and it gives marginal speed improvement, so
     # I'm leaving it on. Might revisit later. Also revisit -march=native, which
     # will probably make distribution & Dockerisation a pain.
-    extra_flags = ['-march=native', '-Ofast']
+    #extra_flags = ['-march=native', '-Ofast']
+    extra_flags = ['-Ofast']
     objects = compiler.compile(
         [src],
         debug=True,

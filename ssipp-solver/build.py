@@ -718,13 +718,13 @@ def main():
 
     global C_COMPILER
     C_COMPILER = args.c_compiler
-    c_flags = ['-Wall', '-march=native', '-fno-lto']
+    c_flags = ['-Wall', '-fno-lto']
 
     global CPP_COMPILER
     CPP_COMPILER = args.cpp_compiler
 
     cpp_flags = [
-        '-Wall', '-DATOM_STATES', '-march=native', '-std=c++14', '-I./',
+        '-Wall', '-DATOM_STATES', '-std=c++14', '-I./',
         '-fdiagnostics-color=always', '-fno-lto'
     ]
     if args.cpp_flags is not None:
